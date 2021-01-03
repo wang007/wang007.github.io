@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14.0/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"8.0.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}};
+  </script>
+
+  <meta name="description" content="零在上一篇文章中分享了 gradle 上手，这篇文章继续分享使用 gradle plugin 解决实际项目上遇到的问题。  使用 gradle plugin 生成 grpc client 代码 使用 gradle plugin 简化 项目中 build.gradle 的配置">
+<meta property="og:type" content="article">
+<meta property="og:title" content="gradle plugin 实战">
+<meta property="og:url" content="http://example.com/gradle-plugin-action/index.html">
+<meta property="og:site_name" content="wang007 blog">
+<meta property="og:description" content="零在上一篇文章中分享了 gradle 上手，这篇文章继续分享使用 gradle plugin 解决实际项目上遇到的问题。  使用 gradle plugin 生成 grpc client 代码 使用 gradle plugin 简化 项目中 build.gradle 的配置">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-01-03T07:48:50.000Z">
+<meta property="article:modified_time" content="2021-01-03T17:34:16.629Z">
+<meta property="article:author" content="wang007">
+<meta property="article:tag" content="java">
+<meta property="article:tag" content="gradle">
+<meta property="article:tag" content="gradle plugin">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/gradle-plugin-action/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>gradle plugin 实战 | wang007 blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">wang007 blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <section class="post-toc-wrap sidebar-panel">
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9B%B6"><span class="nav-number">1.</span> <span class="nav-text">零</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E4%BD%BF%E7%94%A8-gradle-plugin-%E7%94%9F%E6%88%90-grpc-client-%E4%BB%A3%E7%A0%81"><span class="nav-number">2.</span> <span class="nav-text">1. 使用 gradle plugin 生成 grpc client 代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%B9%E8%BF%9B%E7%89%88%E6%9C%AC"><span class="nav-number">2.1.</span> <span class="nav-text">改进版本</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E4%BD%BF%E7%94%A8-gradle-plugin-%E7%AE%80%E5%8C%96-%E9%A1%B9%E7%9B%AE%E4%B8%AD-build-gradle-%E7%9A%84%E9%85%8D%E7%BD%AE"><span class="nav-number">3.</span> <span class="nav-text">2. 使用 gradle plugin 简化 项目中 build.gradle 的配置</span></a></li></ol></div>
+      </section>
+      <!--/noindex-->
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">wang007</p>
+  <div class="site-description" itemprop="description">wang007 blog</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </section>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+      
+
+      
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/gradle-plugin-action/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="wang007">
+      <meta itemprop="description" content="wang007 blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wang007 blog">
+    </span>
+
+    
+    
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          gradle plugin 实战
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-01-03 15:48:50" itemprop="dateCreated datePublished" datetime="2021-01-03T15:48:50+08:00">2021-01-03</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-01-04 01:34:16" itemprop="dateModified" datetime="2021-01-04T01:34:16+08:00">2021-01-04</time>
+      </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="零"><a href="#零" class="headerlink" title="零"></a>零</h2><p>在上一篇文章中分享了 gradle 上手，这篇文章继续分享使用 gradle plugin 解决实际项目上遇到的问题。</p>
+<ol>
+<li>使用 gradle plugin 生成 grpc client 代码</li>
+<li>使用 gradle plugin 简化 项目中 build.gradle 的配置</li>
+</ol>
+<a id="more"></a>
+
+<h2 id="1-使用-gradle-plugin-生成-grpc-client-代码"><a href="#1-使用-gradle-plugin-生成-grpc-client-代码" class="headerlink" title="1. 使用 gradle plugin 生成 grpc client 代码"></a>1. 使用 gradle plugin 生成 grpc client 代码</h2><blockquote>
+<p>首先 protoc 本身有插件机制的，无奈找了下资料全部都是 C++ 写的，为了不引入 C++ 的技术栈，所以用 gradle plugin 方式来做。</p>
+</blockquote>
+<ol>
+<li>需求： 公司项目 rpc 使用的是 grpc，自己封装了 grpc client 连接管理。grpc-gen 可以生成 grpc stub 作<br>为 client 调用，但是使用生成的 stub 调用服务有一层模板代码，希望使用代码生成的方式自己生成这个模板代码。</li>
+<li>grpc-gen 插件通过 generateProto task 生成 stub 源码到 src 目录下，这个 task 最终让 compileJava task 依赖它一并参与编译。</li>
+<li>grpc-client 代码生成 gradle plugin 的思路就是读取生成的 stub 代码作为 meta data 来生成 grpc client。</li>
+</ol>
+<p>由于生成的 stub 是java 源代码，当时的思路是先让 stub 代码先编译完，然后去编译完的 build 目录下的 class 目录找编译后的 stub class。<br>通过反射 class 读取信息来生成 grpc client。  </p>
+<p>定义 grpc-client task 为 generateEndpoint，这种方式的 task 依赖是</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">                      ── generateProto task</span><br><span class="line">generateEndpoint ──&gt; │</span><br><span class="line">                      ── classes task</span><br></pre></td></tr></table></figure>
+<p>实现方式：</p>
+<ol>
+<li>先去 stub 源码目录找 stub 对应的类名（即 目录 + java 源文件名）</li>
+<li>根据 类名再去 classes 目录找对应的 stub class。</li>
+<li>反射读取 stub class。使用 javassist 类库生成 grpc-client class 文件 和 使用 javapoet 类库生成 grpc-client java 源文件。  </li>
+</ol>
+<p>Q &amp; A<br>为什么要生成 class 文件？<br>因为要读取 classes 目录的文件，此时项目已经完成了编译，所以必须手动生成 class 文件加到 classes 目录中。  </p>
+<p>既然都有 class 文件了，为什么还需要再生成 java 源文件呢？<br>为了方便使用方查询生成之后的代码是怎样的。</p>
+<h3 id="改进版本"><a href="#改进版本" class="headerlink" title="改进版本"></a>改进版本</h3><p>虽然根据上述方式实现出来并在公司内部使用了一段时间，但是这种方式显然不能一种优雅的解决方案，更大的问题是升级到 gradle 高版本时报一些依赖问题。<br>所以为了更优雅的方式实现，决定不使用读取 classes 目录 class文件的方式来实现，而是直接读取 stub java 源文件解析生成 grpc-client java 源文件并参与编译。  </p>
+<p>实现方式：</p>
+<ol>
+<li>读取 grpc stub 所有的 java 源文件</li>
+<li>使用 javaparser 类库从 java 源文件中读取并获得 meta data。</li>
+<li>根据 meta data 生成 grpc-client java 源文件。</li>
+<li>把 grpc-client 源文件对应的目录加到 sourcesets 中，参与编译。</li>
+<li>相当于之前的版本，这种方式更简单些。例如：不需要再使用自定义 classLoader 的方式去加载 class 文件。</li>
+</ol>
+<blockquote>
+<p>说到 classLoader，当时这里踩了个坑。 classLoader 默认的 parent 是 SystemClassLoader，而不是当前 new XxxClassLoader 所在的类的 classLoader。</p>
+</blockquote>
+<p>这种方式的实现， task 依赖关系：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">            compileJava                                     </span><br><span class="line">                 │</span><br><span class="line">            ──────────</span><br><span class="line">           │          │</span><br><span class="line">           ↓          ↓</span><br><span class="line">generateEndpoint ──&gt; generateProto task </span><br></pre></td></tr></table></figure>
+
+<p>改进版本的伪代码：</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">EndpointGenPlugin</span> <span class="keyword">implements</span> <span class="title">Plugin</span>&lt;<span class="title">Project</span>&gt; &#123;</span></span><br><span class="line">    <span class="keyword">void</span> apply(Project project) &#123;</span><br><span class="line">        <span class="comment">//配置项，都有默认值，遵循约定大于配置的原则</span></span><br><span class="line">        project.extensions.add(<span class="string">&quot;endpointGen&quot;</span>, <span class="keyword">new</span> EndpointGen())</span><br><span class="line">        </span><br><span class="line">        project.afterEvaluate &#123;</span><br><span class="line">            <span class="keyword">def</span> opt = project.endpointGen <span class="comment">//读取配置项</span></span><br><span class="line">            <span class="keyword">if</span> (!opt.enable) &#123;</span><br><span class="line">                <span class="comment">//log</span></span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line">            &#125;</span><br><span class="line">            project.task(<span class="attr">group:</span> <span class="string">&quot;proto&quot;</span>, <span class="string">&quot;generateEndpoint&quot;</span>) &#123; </span><br><span class="line">                <span class="comment">//配置阶段</span></span><br><span class="line">                </span><br><span class="line">                dependsOn  <span class="string">&quot;generateProto&quot;</span> <span class="comment">//依赖 generateProto task</span></span><br><span class="line">                <span class="keyword">def</span> compileJavaTask = project.tasks.getByName(<span class="string">&quot;compileJava&quot;</span>)</span><br><span class="line">                compileJavaTask.dependsOn(it) <span class="comment">//让 compileJava 依赖当前 task</span></span><br><span class="line">                </span><br><span class="line">                <span class="keyword">def</span> genBaseDir = project.protobuf.generatedFilesBaseDir</span><br><span class="line">                <span class="comment">// grpc service 目录</span></span><br><span class="line">                String grpcGenDir = genBaseDir + opt.readFromGrpcSubDir</span><br><span class="line">                <span class="comment">//ep 生成目录</span></span><br><span class="line">                String epGenDir = genBaseDir + opt.writeToEndpointSubDir</span><br><span class="line">                </span><br><span class="line">                <span class="comment">//配置 task inputs，outputs</span></span><br><span class="line">                inputs.dir(<span class="keyword">new</span> File(grpcGenDir))</span><br><span class="line">                outputs.dir(<span class="keyword">new</span> File(epGenDir))</span><br><span class="line">                </span><br><span class="line">                <span class="comment">//添加到编译目录</span></span><br><span class="line">                compileJavaTask.source <span class="keyword">new</span> File(epGenDir)</span><br><span class="line">                </span><br><span class="line">                <span class="comment">//task 执行阶段的代码</span></span><br><span class="line">                doLast &#123;</span><br><span class="line">                    <span class="comment">//获取 stub java 源文件</span></span><br><span class="line">                    <span class="keyword">def</span> javaSrcFiles = project.fileTree(grpcGenDir).getFiles().toList()</span><br><span class="line">                    <span class="comment">//生成 meta data</span></span><br><span class="line">                    <span class="keyword">def</span> clientModels = EndpointClientModel.parseSrcToModel(javaSrcFiles, projectPkgName)</span><br><span class="line">                    <span class="comment">//根据 meta data 生成 grpc-client java 源文件</span></span><br><span class="line">                    clientModels.forEach &#123;</span><br><span class="line">                        <span class="keyword">if</span> (GenEndpointClient.gen(epGenDir, it, project) == <span class="literal">null</span>) &#123;</span><br><span class="line">                            <span class="keyword">throw</span> <span class="keyword">new</span> GradleException(<span class="string">&quot;generate $&#123;it.pkg&#125;.$&#123;it.className&#125; java source file failed&quot;</span>)</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="comment">//doLast</span></span><br><span class="line">            &#125; <span class="comment">//task</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-使用-gradle-plugin-简化-项目中-build-gradle-的配置"><a href="#2-使用-gradle-plugin-简化-项目中-build-gradle-的配置" class="headerlink" title="2. 使用 gradle plugin 简化 项目中 build.gradle 的配置"></a>2. 使用 gradle plugin 简化 项目中 build.gradle 的配置</h2><p>需求：随着微服务的拆分，项目会越来越多。而且项目 build.gradle 配置也比较多，对于 build.gradle 本身来说<br>就是重复代码，而且散落在各种项目上。所以为了解决这个问题，开发一个 gradle 插件来简化各个项目的 build.gradle<br>并提供各种约定俗成的配置和简化过后的配置。  </p>
+<p>最终效果：项目只需要 apply 这个 plugin，然后管理依赖就行了。其他的配置，包括常用插件，常用 task，插件的参数配置等全部自动化了，build.gradle 也清晰很多。</p>
+<ol>
+<li><p>grpc 配置<br>正常情况下，grpc gradle 配置需要写一堆的配置。通过插件集成之后，<br>只需要调用 applyProtobuf() 方法即可，甚至可以根据项目名来判断自动调用 applyProtobuf()。例如项目名为 proto</p>
+</li>
+<li><p>docker 打镜像配置<br>docker 打镜像也是集成到 gradle 中，使用的是 gradle-docker-plugin。也是需要大段的配置，同时 还有 build 脚本也写了一大堆打镜像的逻辑。<br>通过插件集成之后，只需要调用 applyDocker() 方法即可，甚至可以根据项目名来判断自动调用 applyDocker()。例如项目名为 server。</p>
+</li>
+<li><p>jar 打包上传<br>通常打 jar 和上传也是需要大段配置代码，使用的是 maven-publish 插件。通过插件集成之后，只需要调用 applyPublish() 方法即可</p>
+</li>
+<li><p>还有很多细节的处理，这里就不一一举例了。</p>
+</li>
+</ol>
+<p>最终可以把这些操作统一成 task，作为项目打包的统一入口。 那么 CI 的配置就会非常简单，只需要执行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;gradlew packet</span><br></pre></td></tr></table></figure>
+<p>就可以完成统一的打包，非常简单，也解决 java 开发者上手配置这些 task 的问题。</p>
+<p>其实要完成这个统一打包的功能很简单，就是让 packet task 依赖 打包上传 jar 的 task，打 docker 镜像和上传镜像的 task。<br>简单而强大。</p>
+<hr>
+<p>参考文档：<br><a target="_blank" rel="noopener" href="https://github.com/jboss-javassist/javassist">javassist</a><br><a target="_blank" rel="noopener" href="https://github.com/square/javapoet">javapoet</a><br><a target="_blank" rel="noopener" href="https://github.com/javaparser/javaparser">javaparser</a><br><a target="_blank" rel="noopener" href="https://github.com/bmuschko/gradle-docker-plugin">gradle-docker-plugin</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/java/" rel="tag"># java</a>
+              <a href="/tags/gradle/" rel="tag"># gradle</a>
+              <a href="/tags/gradle-plugin/" rel="tag"># gradle plugin</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/gradle-get-started/" rel="next" title="gradle 上手">
+                  gradle 上手 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+  
+  
+  
+
+
+
+      
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      
+
+      
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">wang007</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.0/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

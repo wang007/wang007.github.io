@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14.0/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"8.0.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}};
+  </script>
+
+  <meta name="description" content="零接着上一篇文章继续分析。 实际上，理解上融合模式的思路之后，源码看看起来就清晰很多。特别是异步融合模式，通过onNext方法向下游通知数据已准备好，很容易理解为往下游发射数据。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="java异步编程探究-Project Reactor实现原理-2">
+<meta property="og:url" content="http://example.com/java-async-road-5/index.html">
+<meta property="og:site_name" content="wang007 blog">
+<meta property="og:description" content="零接着上一篇文章继续分析。 实际上，理解上融合模式的思路之后，源码看看起来就清晰很多。特别是异步融合模式，通过onNext方法向下游通知数据已准备好，很容易理解为往下游发射数据。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/java-async-road-5/MonoObserveOn.png">
+<meta property="og:image" content="http://example.com/java-async-road-5/MonoSubscribeOn.png">
+<meta property="article:published_time" content="2019-12-28T16:06:12.000Z">
+<meta property="article:modified_time" content="2021-01-01T17:44:10.398Z">
+<meta property="article:author" content="wang007">
+<meta property="article:tag" content="java">
+<meta property="article:tag" content="异步">
+<meta property="article:tag" content="reactive">
+<meta property="article:tag" content="Project Reactor">
+<meta property="article:tag" content="响应式编程">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/java-async-road-5/MonoObserveOn.png">
+
+
+<link rel="canonical" href="http://example.com/java-async-road-5/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>java异步编程探究-Project Reactor实现原理-2 | wang007 blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">wang007 blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <section class="post-toc-wrap sidebar-panel">
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9B%B6"><span class="nav-number">1.</span> <span class="nav-text">零</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#publishOn%E6%93%8D%E4%BD%9C%E7%AC%A6"><span class="nav-number">1.1.</span> <span class="nav-text">publishOn操作符</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#subscribeOn%E6%93%8D%E4%BD%9C%E7%AC%A6"><span class="nav-number">1.2.</span> <span class="nav-text">subscribeOn操作符</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#subscribe"><span class="nav-number">1.3.</span> <span class="nav-text">subscribe</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#toProcessor"><span class="nav-number">1.4.</span> <span class="nav-text">toProcessor</span></a></li></ol></li></ol></div>
+      </section>
+      <!--/noindex-->
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">wang007</p>
+  <div class="site-description" itemprop="description">wang007 blog</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </section>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+      
+
+      
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/java-async-road-5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="wang007">
+      <meta itemprop="description" content="wang007 blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wang007 blog">
+    </span>
+
+    
+    
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          java异步编程探究-Project Reactor实现原理-2
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2019-12-29 00:06:12" itemprop="dateCreated datePublished" datetime="2019-12-29T00:06:12+08:00">2019-12-29</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-01-02 01:44:10" itemprop="dateModified" datetime="2021-01-02T01:44:10+08:00">2021-01-02</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/" itemprop="url" rel="index"><span itemprop="name">java</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/%E5%BC%82%E6%AD%A5/" itemprop="url" rel="index"><span itemprop="name">异步</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/%E5%BC%82%E6%AD%A5/%E5%93%8D%E5%BA%94%E5%BC%8F%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">响应式编程</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/%E5%BC%82%E6%AD%A5/%E5%93%8D%E5%BA%94%E5%BC%8F%E7%BC%96%E7%A8%8B/reactive/" itemprop="url" rel="index"><span itemprop="name">reactive</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="零"><a href="#零" class="headerlink" title="零"></a>零</h2><p>接着上一篇文章继续分析。</p>
+<p>实际上，理解上融合模式的思路之后，源码看看起来就清晰很多。特别是异步融合模式，通过onNext方法向下游通知数据已准备好，很容易理解为往下游发射数据。</p>
+<a id="more"></a>
+
+<hr>
+<h3 id="publishOn操作符"><a href="#publishOn操作符" class="headerlink" title="publishOn操作符"></a>publishOn操作符</h3><p><img src="/java-async-road-5/MonoObserveOn.png" alt="Mono publishOn"></p>
+<blockquote>
+<p>这里用了Rxjava2中的ObserveOn操作符，但是效果是一样的。<br>图片描述已经很清楚了，就是下游执行在scheduler线程上。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//很明显这里没有对上游做融合处理</span></span><br><span class="line"><span class="comment">//入参指定scheduler</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> Mono&lt;T&gt; <span class="title">publishOn</span><span class="params">(Scheduler scheduler)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//这个if分支属于优化分支，不深入分析</span></span><br><span class="line">	<span class="keyword">if</span>(<span class="keyword">this</span> <span class="keyword">instanceof</span> Callable) &#123;</span><br><span class="line">		<span class="keyword">if</span> (<span class="keyword">this</span> <span class="keyword">instanceof</span> Fuseable.ScalarCallable) &#123;</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				T value = block();</span><br><span class="line">				<span class="keyword">return</span> onAssembly(<span class="keyword">new</span> MonoSubscribeOnValue&lt;&gt;(value, scheduler));</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">				<span class="comment">//leave MonoSubscribeOnCallable defer error</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		Callable&lt;T&gt; c = (Callable&lt;T&gt;)<span class="keyword">this</span>;</span><br><span class="line">		<span class="keyword">return</span> onAssembly(<span class="keyword">new</span> MonoSubscribeOnCallable&lt;&gt;(c, scheduler));</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">return</span> onAssembly(<span class="keyword">new</span> MonoPublishOn&lt;&gt;(<span class="keyword">this</span>, scheduler));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后创建一个MonoPublishOn实例</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">MonoPublishOn</span>&lt;<span class="title">T</span>&gt; <span class="keyword">extends</span> <span class="title">InternalMonoOperator</span>&lt;<span class="title">T</span>, <span class="title">T</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">final</span> Scheduler scheduler;</span><br><span class="line"></span><br><span class="line">	MonoPublishOn(Mono&lt;? extends T&gt; source, Scheduler scheduler) &#123;</span><br><span class="line">		<span class="keyword">super</span>(source);</span><br><span class="line">		<span class="keyword">this</span>.scheduler = scheduler;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="keyword">public</span> CoreSubscriber&lt;? <span class="keyword">super</span> T&gt; subscribeOrReturn(CoreSubscriber&lt;? <span class="keyword">super</span> T&gt; actual) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">new</span> PublishOnSubscriber&lt;T&gt;(actual, scheduler);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> Object <span class="title">scanUnsafe</span><span class="params">(Attr key)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (key == Attr.RUN_ON) <span class="keyword">return</span> scheduler;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">super</span>.scanUnsafe(key);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>MonoPublishOn没有实现Fuseable接口，所以不支持融合的<br>InternalMonoOperator上一篇文章分析过了，这里包装了下游的Subscriber（actual），接着分析PublishOnSubscriber</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">PublishOnSubscriber</span>&lt;<span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class">			<span class="keyword">implements</span> <span class="title">InnerOperator</span>&lt;<span class="title">T</span>, <span class="title">T</span>&gt;, <span class="title">Runnable</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">final</span> CoreSubscriber&lt;? <span class="keyword">super</span> T&gt; actual;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">final</span> Scheduler scheduler;</span><br><span class="line"></span><br><span class="line">		Subscription s;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">volatile</span> Disposable future;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">volatile</span> T value;</span><br><span class="line">		</span><br><span class="line"></span><br><span class="line">		<span class="keyword">volatile</span> Throwable error;</span><br><span class="line"></span><br><span class="line">		PublishOnSubscriber(CoreSubscriber&lt;? <span class="keyword">super</span> T&gt; actual,</span><br><span class="line">				Scheduler scheduler) &#123;</span><br><span class="line">			<span class="keyword">this</span>.actual = actual;</span><br><span class="line">			<span class="keyword">this</span>.scheduler = scheduler;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">//第1步 往下游传递Subscription，下游会调用到request方法</span></span><br><span class="line">		<span class="meta">@Override</span></span><br><span class="line">		<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onSubscribe</span><span class="params">(Subscription s)</span> </span>&#123;</span><br><span class="line">			<span class="keyword">if</span> (Operators.validate(<span class="keyword">this</span>.s, s)) &#123;</span><br><span class="line">				<span class="keyword">this</span>.s = s;</span><br><span class="line"></span><br><span class="line">				actual.onSubscribe(<span class="keyword">this</span>);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">//第2步 直接把请求消息往上游传递，上游会调用onNext方法</span></span><br><span class="line">		<span class="meta">@Override</span></span><br><span class="line">		<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">request</span><span class="params">(<span class="keyword">long</span> n)</span> </span>&#123;</span><br><span class="line">			s.request(n);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">//第3步 保存值，并且在scheduler调度执行发射数据到下游</span></span><br><span class="line">		<span class="meta">@Override</span></span><br><span class="line">		<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onNext</span><span class="params">(T t)</span> </span>&#123;</span><br><span class="line">			value = t;</span><br><span class="line">			trySchedule(<span class="keyword">this</span>, <span class="keyword">null</span>, t);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="meta">@Override</span></span><br><span class="line">		<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onError</span><span class="params">(Throwable t)</span> </span>&#123;</span><br><span class="line">			error = t;</span><br><span class="line">			trySchedule(<span class="keyword">null</span>, t, <span class="keyword">null</span>);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="meta">@Override</span></span><br><span class="line">		<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onComplete</span><span class="params">()</span> </span>&#123;</span><br><span class="line">			<span class="keyword">if</span> (value == <span class="keyword">null</span>) &#123; <span class="comment">//没有调度过</span></span><br><span class="line">				trySchedule(<span class="keyword">null</span>, <span class="keyword">null</span>, <span class="keyword">null</span>);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">//第4步 </span></span><br><span class="line">		<span class="function"><span class="keyword">void</span> <span class="title">trySchedule</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">				<span class="meta">@Nullable</span> Subscription subscription,</span></span></span><br><span class="line"><span class="function"><span class="params">				<span class="meta">@Nullable</span> Throwable suppressed,</span></span></span><br><span class="line"><span class="function"><span class="params">				<span class="meta">@Nullable</span> Object dataSignal)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">				<span class="keyword">if</span>(future != <span class="keyword">null</span>)&#123;</span><br><span class="line">					<span class="keyword">return</span>;</span><br><span class="line">				&#125;</span><br><span class="line"></span><br><span class="line">				<span class="keyword">try</span> &#123;</span><br><span class="line">					<span class="comment">//this实现了Runnable，最后会在scheduler的线程池上执行run方法</span></span><br><span class="line">					future = <span class="keyword">this</span>.scheduler.schedule(<span class="keyword">this</span>);</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">catch</span> (RejectedExecutionException ree) &#123;</span><br><span class="line">					actual.onError(Operators.onRejectedExecution(ree, subscription,</span><br><span class="line">							suppressed,	dataSignal, actual.currentContext()));</span><br><span class="line">				&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">//第5步 </span></span><br><span class="line">		<span class="comment">//当执行此run方法时，执行线程在scheduler上的线程。</span></span><br><span class="line">		<span class="meta">@Override</span></span><br><span class="line">		<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">			<span class="keyword">if</span> (OperatorDisposables.isDisposed(future)) &#123;</span><br><span class="line">				<span class="keyword">return</span>;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">//value在onNext方法设置了，设置为null，代表已处理</span></span><br><span class="line">			T v = (T)VALUE.getAndSet(<span class="keyword">this</span>, <span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line">			<span class="comment">//调用下游的方法，此时已执行在scheduler上的线程，完全符合observeOn图的定义。</span></span><br><span class="line">			<span class="keyword">if</span> (v != <span class="keyword">null</span>) &#123;</span><br><span class="line">				actual.onNext(v);</span><br><span class="line">				actual.onComplete();</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">else</span> &#123;</span><br><span class="line">				Throwable e = error;</span><br><span class="line">				<span class="keyword">if</span> (e != <span class="keyword">null</span>) &#123;</span><br><span class="line">					actual.onError(e);</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">else</span> &#123;</span><br><span class="line">					actual.onComplete();</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">//省略若干代码</span></span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="subscribeOn操作符"><a href="#subscribeOn操作符" class="headerlink" title="subscribeOn操作符"></a>subscribeOn操作符</h3><p><img src="/java-async-road-5/MonoSubscribeOn.png" alt="Mono SubscribeOn"><br>根据图片描述，订阅上游执行scheduler上</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> Mono&lt;T&gt; <span class="title">subscribeOn</span><span class="params">(Scheduler scheduler)</span> </span>&#123;</span><br><span class="line">		<span class="comment">//优化分支，忽略</span></span><br><span class="line">		<span class="keyword">if</span>(<span class="keyword">this</span> <span class="keyword">instanceof</span> Callable) &#123;</span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">this</span> <span class="keyword">instanceof</span> Fuseable.ScalarCallable) &#123;</span><br><span class="line">				<span class="keyword">try</span> &#123;</span><br><span class="line">					T value = block();</span><br><span class="line">					<span class="keyword">return</span> onAssembly(<span class="keyword">new</span> MonoSubscribeOnValue&lt;&gt;(value, scheduler));</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">					<span class="comment">//leave MonoSubscribeOnCallable defer error</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="meta">@SuppressWarnings(&quot;unchecked&quot;)</span></span><br><span class="line">			Callable&lt;T&gt; c = (Callable&lt;T&gt;)<span class="keyword">this</span>;</span><br><span class="line">			<span class="keyword">return</span> onAssembly(<span class="keyword">new</span> MonoSubscribeOnCallable&lt;&gt;(c,</span><br><span class="line">					scheduler));</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> onAssembly(<span class="keyword">new</span> MonoSubscribeOn&lt;&gt;(<span class="keyword">this</span>, scheduler));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个也是不支持融合的，直接返回MonoSubscribeOn。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">MonoSubscribeOn</span>&lt;<span class="title">T</span>&gt; <span class="keyword">extends</span> <span class="title">InternalMonoOperator</span>&lt;<span class="title">T</span>, <span class="title">T</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">final</span> Scheduler scheduler;</span><br><span class="line"></span><br><span class="line">	MonoSubscribeOn(Mono&lt;? extends T&gt; source, Scheduler scheduler) &#123;</span><br><span class="line">		<span class="keyword">super</span>(source);</span><br><span class="line">		<span class="keyword">this</span>.scheduler = scheduler;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="keyword">public</span> CoreSubscriber&lt;? <span class="keyword">super</span> T&gt; subscribeOrReturn(CoreSubscriber&lt;? <span class="keyword">super</span> T&gt; actual) &#123;</span><br><span class="line">		Scheduler.Worker worker = scheduler.createWorker();</span><br><span class="line"></span><br><span class="line">		<span class="comment">//同样也是Runnable</span></span><br><span class="line">		SubscribeOnSubscriber&lt;T&gt; parent = <span class="keyword">new</span> SubscribeOnSubscriber&lt;&gt;(source,</span><br><span class="line">				actual, worker);</span><br><span class="line">		actual.onSubscribe(parent);	<span class="comment">//这里调用下游的onSubscribe方法</span></span><br><span class="line"></span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			<span class="comment">//在scheduler执行</span></span><br><span class="line">			worker.schedule(parent);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">catch</span> (RejectedExecutionException ree) &#123;</span><br><span class="line">			<span class="keyword">if</span> (parent.s != Operators.cancelledSubscription()) &#123;</span><br><span class="line">				actual.onError(Operators.onRejectedExecution(ree, parent, <span class="keyword">null</span>, <span class="keyword">null</span>,</span><br><span class="line">						actual.currentContext()));</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">//前面InternalMonoOperator的时候提到了，return null代表subscribeOrReturn方法已经处理了对上游的subscribe</span></span><br><span class="line">		<span class="comment">//所以InternalMonoOperator#subscribe会停止往上游包装Subscriber，</span></span><br><span class="line">		<span class="comment">//所以这里的入参actual被多个下游包装过的Subscriber。不清楚的话继续看InternalMonoOperator#subscribe方法</span></span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> Object <span class="title">scanUnsafe</span><span class="params">(Attr key)</span> </span>&#123;</span><br><span class="line">		<span class="comment">//返回执行所在的scheduler</span></span><br><span class="line">		<span class="keyword">if</span> (key == Attr.RUN_ON) <span class="keyword">return</span> scheduler;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">super</span>.scanUnsafe(key);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么SubscribeOnSubscriber是实现的关键</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">SubscribeOnSubscriber</span>&lt;<span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class">		<span class="keyword">implements</span> <span class="title">InnerOperator</span>&lt;<span class="title">T</span>, <span class="title">T</span>&gt;, <span class="title">Runnable</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">final</span> CoreSubscriber&lt;? <span class="keyword">super</span> T&gt; actual;	<span class="comment">//下游Subscriber</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">final</span> Publisher&lt;? extends T&gt; parent; <span class="comment">//上游</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">final</span> Scheduler.Worker worker; <span class="comment">//调度器worker</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">volatile</span> Subscription s;	</span><br><span class="line"></span><br><span class="line">	<span class="keyword">volatile</span> <span class="keyword">long</span> requested; 	<span class="comment">//下游请求的信号量</span></span><br><span class="line">	</span><br><span class="line">	<span class="keyword">volatile</span> Thread thread;		<span class="comment">//</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">//省略AtomicReferenceFieldUpdater						</span></span><br><span class="line">	<span class="comment">//省略构造方法</span></span><br><span class="line">	</span><br><span class="line">	<span class="comment">//根据subscribeOrReturn方法的处理。有两种情况</span></span><br><span class="line">	<span class="comment">//1. run方法先执行，request方法后执行</span></span><br><span class="line">	<span class="comment">//2. request方法先执行，run方法后执行</span></span><br><span class="line">	<span class="comment">//不过这里顺序不是重点</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">//第1步， 订阅上游执行在worker线程上</span></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="comment">//保存当前线程引用</span></span><br><span class="line">		THREAD.lazySet(<span class="keyword">this</span>, Thread.currentThread());</span><br><span class="line">		<span class="comment">//订阅上游，很明显订阅上游执行在Scheduler.Worker上</span></span><br><span class="line">		parent.subscribe(<span class="keyword">this</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//第2步，因为对上游subscribe时，subscribe方法时会调用onSubscribe，所以onSubscribe方法也会执行在worker线程上，</span></span><br><span class="line">	<span class="comment">//但是不是绝对执行在worker线程上，因为上游在subscribe方法时也有可能做切换线程的操作</span></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onSubscribe</span><span class="params">(Subscription s)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (Operators.setOnce(S, <span class="keyword">this</span>, s)) &#123;</span><br><span class="line">			<span class="keyword">long</span> r = REQUESTED.getAndSet(<span class="keyword">this</span>, <span class="number">0L</span>);</span><br><span class="line">			<span class="keyword">if</span> (r != <span class="number">0L</span>) &#123;	<span class="comment">//说明下游调用过request方法了</span></span><br><span class="line">				trySchedule(r, s);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//也有可能request才是第1步</span></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">request</span><span class="params">(<span class="keyword">long</span> n)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (Operators.validate(n)) &#123;</span><br><span class="line">			Subscription a = s;</span><br><span class="line">			<span class="keyword">if</span> (a != <span class="keyword">null</span>) &#123; <span class="comment">//有上游的Subscription，那么肯定是先执行了run方法了，</span></span><br><span class="line">				trySchedule(n, a);</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">else</span> &#123; <span class="comment">//先执行了request，那么request请求数据量先保存下来</span></span><br><span class="line">				Operators.addCap(REQUESTED, <span class="keyword">this</span>, n);	</span><br><span class="line">				a = s;</span><br><span class="line">				<span class="keyword">if</span> (a != <span class="keyword">null</span>) &#123; <span class="comment">//再检查一下</span></span><br><span class="line">					<span class="keyword">long</span> r = REQUESTED.getAndSet(<span class="keyword">this</span>, <span class="number">0L</span>);</span><br><span class="line">					<span class="keyword">if</span> (r != <span class="number">0L</span>) &#123;</span><br><span class="line">						trySchedule(n, a);</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//以上两种情况最后都会执行到trySchedule方法中来，该方法是向上游调用request方法</span></span><br><span class="line">	第<span class="number">3</span>步</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">trySchedule</span><span class="params">(<span class="keyword">long</span> n, Subscription s)</span> </span>&#123;</span><br><span class="line">		<span class="comment">//在onSubscribe方法执行的trySchedule方法情况</span></span><br><span class="line">		<span class="comment">//因为都在worker线程上，所以直接调用上游的request方法即可</span></span><br><span class="line">		<span class="keyword">if</span> (Thread.currentThread() == THREAD.get(<span class="keyword">this</span>)) &#123;</span><br><span class="line">			s.request(n);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="comment">//在request方法执行的trySchedule方法情况，此时不在worker线程上，切回到worker线程上</span></span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				worker.schedule(() -&gt; s.request(n));</span><br><span class="line"></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">catch</span> (RejectedExecutionException ree) &#123;</span><br><span class="line">				<span class="keyword">if</span> (!worker.isDisposed()) &#123;</span><br><span class="line">					actual.onError(Operators.onRejectedExecution(ree,</span><br><span class="line">							<span class="keyword">this</span>,</span><br><span class="line">							<span class="keyword">null</span>,</span><br><span class="line">							<span class="keyword">null</span>,</span><br><span class="line">							actual.currentContext()));</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//第4步，调用上游的request方法执行在worker线程上，request方法可能包括**直接**向下游发射onNext方法。</span></span><br><span class="line">	<span class="comment">//所以onNext方法也有可能执行worker线程上</span></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onNext</span><span class="params">(T t)</span> </span>&#123;</span><br><span class="line">		actual.onNext(t);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onError</span><span class="params">(Throwable t)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">try</span>&#123;</span><br><span class="line">			actual.onError(t);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">finally</span> &#123;</span><br><span class="line">			worker.dispose();</span><br><span class="line">			THREAD.lazySet(<span class="keyword">this</span>,<span class="keyword">null</span>);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="comment">//省略若干方法</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>实际上面分析trySchedule方法内调用上游的request方法，但是request方法是否包括直接向下游发射数据的onNext方法是不一定的。<br>例如：</p>
+<ul>
+<li>publishOn操作符，request方法直接往上游传，上游调用publishOn的onNext方法，onNext方法内却切换了publishOn所在的Scheduler线程。</li>
+<li>flatMap操作符，request方法到flatMap的subscription时，也得在新数据源的数据是否完成时才执行下游的onNext方法</li>
+</ul>
+<p>总结：</p>
+<ul>
+<li>subscribeOn操作符：明确的是对调用上游subscribe和request所在的Scheduler，正如它的操作符名字一样subscribeOn，subscribe在哪个Scheduler。</li>
+<li>publishOn操作符：明确的是对调用下游发射数据（onNext）和发射通知（onComplete、onError）所在的Scheduler。</li>
+</ul>
+<hr>
+<h3 id="subscribe"><a href="#subscribe" class="headerlink" title="subscribe"></a>subscribe</h3><p>最后再来说说Mono#subscribe方法<br>subscribe方法，入参是lambda类型的，最后都会生成一个coreSubscriber.<br>例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> Disposable <span class="title">subscribe</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">			<span class="meta">@Nullable</span> Consumer&lt;? <span class="keyword">super</span> T&gt; consumer,</span></span></span><br><span class="line"><span class="function"><span class="params">			<span class="meta">@Nullable</span> Consumer&lt;? <span class="keyword">super</span> Throwable&gt; errorConsumer,</span></span></span><br><span class="line"><span class="function"><span class="params">			<span class="meta">@Nullable</span> Runnable completeConsumer)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> subscribe(consumer, errorConsumer, completeConsumer, (Context) <span class="keyword">null</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后都会执行到</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> Disposable <span class="title">subscribe</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">			<span class="meta">@Nullable</span> Consumer&lt;? <span class="keyword">super</span> T&gt; consumer,</span></span></span><br><span class="line"><span class="function"><span class="params">			<span class="meta">@Nullable</span> Consumer&lt;? <span class="keyword">super</span> Throwable&gt; errorConsumer,</span></span></span><br><span class="line"><span class="function"><span class="params">			<span class="meta">@Nullable</span> Runnable completeConsumer,</span></span></span><br><span class="line"><span class="function"><span class="params">			<span class="meta">@Nullable</span> Context initialContext)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> subscribeWith(<span class="keyword">new</span> LambdaMonoSubscriber&lt;&gt;(consumer, errorConsumer,</span><br><span class="line">				completeConsumer, <span class="keyword">null</span>, initialContext));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//subscribeWith很简单，就是执行subscribe方法，最后返回Disposable </span></span><br><span class="line"><span class="comment">//LambdaMonoSubscriber实现Disposable方法</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> &lt;E extends Subscriber&lt;? <span class="keyword">super</span> T&gt;&gt; <span class="function">E <span class="title">subscribeWith</span><span class="params">(E subscriber)</span> </span>&#123;</span><br><span class="line">		subscribe(subscriber);</span><br><span class="line">		<span class="keyword">return</span> subscriber;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>调用subscribe方法时，如果上游是OptimizableOperator的话，会执行到subscribeOrReturn方法，然后会对最开始的LambdaMonoSubscriber实例包装。<br>还有一个subscribe方法，入参是subscriber的，是Reactive Stream规范中的Publisher定义的方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">subscribe</span><span class="params">(Subscriber&lt;? <span class="keyword">super</span> T&gt; actual)</span> </span>&#123;</span><br><span class="line">		CorePublisher publisher = Operators.onLastAssembly(<span class="keyword">this</span>);</span><br><span class="line">		<span class="comment">//最后还是包装成CoreSubscriber</span></span><br><span class="line">		CoreSubscriber subscriber = Operators.toCoreSubscriber(actual);</span><br><span class="line"></span><br><span class="line">		<span class="comment">//这里的代码就跟InternalMonoOperator#subscribe方法基本一样了</span></span><br><span class="line">		<span class="keyword">if</span> (publisher <span class="keyword">instanceof</span> OptimizableOperator) &#123;</span><br><span class="line">			OptimizableOperator operator = (OptimizableOperator) publisher;</span><br><span class="line">			<span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">				subscriber = operator.subscribeOrReturn(subscriber);</span><br><span class="line">				<span class="keyword">if</span> (subscriber == <span class="keyword">null</span>) &#123;</span><br><span class="line">					<span class="comment">// null means &quot;I will subscribe myself&quot;, returning...</span></span><br><span class="line">					<span class="keyword">return</span>;</span><br><span class="line">				&#125;</span><br><span class="line"></span><br><span class="line">				OptimizableOperator newSource = operator.nextOptimizableSource();</span><br><span class="line">				<span class="keyword">if</span> (newSource == <span class="keyword">null</span>) &#123;</span><br><span class="line">					publisher = operator.source();</span><br><span class="line">					<span class="keyword">break</span>;</span><br><span class="line">				&#125;</span><br><span class="line">				operator = newSource;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">//一样包装到数据源头了</span></span><br><span class="line">		publisher.subscribe(subscriber);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>LambdaMonoSubscriber比较简单，就不分析了，里面有一点需要关注的是onSubscribe方法。一般情况下，不需要覆写onSubscribe方法，默认是拉满的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//也实现了Disposable</span></span><br><span class="line"><span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">LambdaMonoSubscriber</span>&lt;<span class="title">T</span>&gt; <span class="keyword">implements</span> <span class="title">InnerConsumer</span>&lt;<span class="title">T</span>&gt;, <span class="title">Disposable</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">onSubscribe</span><span class="params">(Subscription s)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (Operators.validate(subscription, s)) &#123;</span><br><span class="line">			<span class="keyword">this</span>.subscription = s;</span><br><span class="line">			</span><br><span class="line">			<span class="comment">//所以覆写的，就不要忘记调用Subscription#request方法</span></span><br><span class="line">			<span class="keyword">if</span> (subscriptionConsumer != <span class="keyword">null</span>) &#123;	</span><br><span class="line">				<span class="keyword">try</span> &#123;</span><br><span class="line">					subscriptionConsumer.accept(s);</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">					Exceptions.throwIfFatal(t);</span><br><span class="line">					s.cancel();</span><br><span class="line">					onError(t);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">else</span> &#123;</span><br><span class="line">				<span class="comment">//默认情况</span></span><br><span class="line">				s.request(Long.MAX_VALUE);</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//dispose方法实际上也是对上游调用cancel方法</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">dispose</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		Subscription s = S.getAndSet(<span class="keyword">this</span>, Operators.cancelledSubscription());</span><br><span class="line">		<span class="keyword">if</span> (s != <span class="keyword">null</span> &amp;&amp; s != Operators.cancelledSubscription()) &#123;</span><br><span class="line">			s.cancel();	</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//省略若干代码</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr>
+<h3 id="toProcessor"><a href="#toProcessor" class="headerlink" title="toProcessor"></a>toProcessor</h3><p>或许你应该没忘记，在Reactive Stream规范还有一个接口：Processor。<br>在介绍响应式编程第一篇文章中有介绍过它。它能让Publisher从冷数据变成热数据，下面就分析分析它是如何实现的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> MonoProcessor&lt;T&gt; <span class="title">toProcessor</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		MonoProcessor&lt;T&gt; result;</span><br><span class="line">		<span class="keyword">if</span> (<span class="keyword">this</span> <span class="keyword">instanceof</span> MonoProcessor) &#123;</span><br><span class="line">			result = (MonoProcessor&lt;T&gt;)<span class="keyword">this</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span> &#123;</span><br><span class="line">			result = <span class="keyword">new</span> MonoProcessor&lt;&gt;(<span class="keyword">this</span>);</span><br><span class="line">		&#125;</span><br><span class="line">		result.connect();</span><br><span class="line">		<span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在操作符内，会创建一个MonoProcessor实例。如果当前Mono本身是Processor，那直接使用。然后调用了connect方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">MonoProcessor</span>&lt;<span class="title">O</span>&gt; <span class="keyword">extends</span> <span class="title">Mono</span>&lt;<span class="title">O</span>&gt;</span></span><br><span class="line"><span class="class">		<span class="keyword">implements</span> <span class="title">Processor</span>&lt;<span class="title">O</span>, <span class="title">O</span>&gt;, <span class="title">CoreSubscriber</span>&lt;<span class="title">O</span>&gt;, <span class="title">Disposable</span>, <span class="title">Subscription</span>, <span class="title">Scannable</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">connect</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		Publisher&lt;? extends O&gt; parent = source; <span class="comment">//上游</span></span><br><span class="line">		<span class="keyword">if</span> (parent != <span class="keyword">null</span> &amp;&amp; SUBSCRIBERS.compareAndSet(<span class="keyword">this</span>, EMPTY_WITH_SOURCE, EMPTY)) &#123;</span><br><span class="line">			parent.subscribe(<span class="keyword">this</span>);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol>
+<li>MonoProcessor继承了Mono，也实现了Processor</li>
+<li>connect方法最后也是订阅了上游。所以Processor方法能让Publisher从冷数据变成热数据，上游的数据也会发射到MonoProcessor并暂存下来。</li>
+<li>toProcessor操作符也仅仅是它所有上游变成热数据，对于其下游来说，还是冷数据。<br>例如<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Mono.just(<span class="string">&quot;name&quot;</span>)                       <span class="comment">//创建发射单个数据的数据源Mono</span></span><br><span class="line">     .map(str -&gt; str + <span class="string">&quot;: wang007&quot;</span>)      <span class="comment">//对数据进行转换</span></span><br><span class="line">     .flatMap(str -&gt; &#123;                   <span class="comment">//平铺</span></span><br><span class="line">        System.out.println(<span class="string">&quot;str -&gt; &quot;</span> + str);</span><br><span class="line">         <span class="keyword">return</span> Mono.defer(() -&gt; Mono.just(str.length()));</span><br><span class="line">      &#125;)</span><br><span class="line">      .toProcessor()</span><br><span class="line">      .map(len -&gt; len + <span class="string">&quot;&quot;</span> + len)                <span class="comment">//再转换，转换成String的长度</span></span><br><span class="line">      .filter(lenStr -&gt; lenStr.length() &gt; <span class="number">5</span>)     <span class="comment">//过滤</span></span><br><span class="line">      .subscribe();</span><br></pre></td></tr></table></figure>
+toProcessor方法只会作用到上游的just、map、flatMap操作符，但是对下游的map、filter操作符则没有影响</li>
+</ol>
+<p>本文分析基于3.3.0.RELEASE版本</p>
+<p>Flux再下一篇文章说</p>
+<p>参考文章：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://reactivex.io/">reactiveX官网</a> </li>
+<li><a target="_blank" rel="noopener" href="http://projectreactor.io/">project Reactor官网</a> </li>
+</ul>
+<hr>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/java/" rel="tag"># java</a>
+              <a href="/tags/%E5%BC%82%E6%AD%A5/" rel="tag"># 异步</a>
+              <a href="/tags/reactive/" rel="tag"># reactive</a>
+              <a href="/tags/Project-Reactor/" rel="tag"># Project Reactor</a>
+              <a href="/tags/%E5%93%8D%E5%BA%94%E5%BC%8F%E7%BC%96%E7%A8%8B/" rel="tag"># 响应式编程</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/java-async-road-6/" rel="prev" title="java异步编程探究-Project Reactor实现原理-3">
+                  <i class="fa fa-chevron-left"></i> java异步编程探究-Project Reactor实现原理-3
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/java-async-road-4/" rel="next" title="java异步编程探究-Project Reactor实现原理">
+                  java异步编程探究-Project Reactor实现原理 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+  
+  
+  
+
+
+
+      
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      
+
+      
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">wang007</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.0/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

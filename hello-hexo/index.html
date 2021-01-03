@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14.0/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"8.0.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}};
+  </script>
+
+  <meta name="description" content="前言 之前陆陆续续又在写博客，最近几个月以来是越来越懒了，博客也许久未写了，技术相关的东西也没有学多少。应该是到了醒悟的时候，同时这次我把每周一篇博客写进我个人成长的OKR中。   作为一枚理工直男，在文字写作方面的能力确实会差了一些。每每在B站看UP主的电影解说的时候，是真的羡慕他们的文字和语言表达能力。就像是以前上学的时候，他们就是经常作文满分的同学，而我就是在及格线上徘徊的渣渣。但是写写技术">
+<meta property="og:type" content="article">
+<meta property="og:title" content="hello-hexo">
+<meta property="og:url" content="http://example.com/hello-hexo/index.html">
+<meta property="og:site_name" content="wang007 blog">
+<meta property="og:description" content="前言 之前陆陆续续又在写博客，最近几个月以来是越来越懒了，博客也许久未写了，技术相关的东西也没有学多少。应该是到了醒悟的时候，同时这次我把每周一篇博客写进我个人成长的OKR中。   作为一枚理工直男，在文字写作方面的能力确实会差了一些。每每在B站看UP主的电影解说的时候，是真的羡慕他们的文字和语言表达能力。就像是以前上学的时候，他们就是经常作文满分的同学，而我就是在及格线上徘徊的渣渣。但是写写技术">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-11-17T16:27:11.000Z">
+<meta property="article:modified_time" content="2021-01-01T17:44:10.388Z">
+<meta property="article:author" content="wang007">
+<meta property="article:tag" content="hexo">
+<meta property="article:tag" content="github.io">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/hello-hexo/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>hello-hexo | wang007 blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">wang007 blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <section class="post-toc-wrap sidebar-panel">
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%AD%A3%E9%A2%98"><span class="nav-number">2.</span> <span class="nav-text">正题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%80%E7%94%A8%E5%88%B0%E7%9A%84%E5%B7%A5%E5%85%B7"><span class="nav-number">2.1.</span> <span class="nav-text">所用到的工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#github-io"><span class="nav-number">2.2.</span> <span class="nav-text">github.io</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#hexo"><span class="nav-number">2.3.</span> <span class="nav-text">hexo</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%89%E8%A3%85hexo"><span class="nav-number">2.3.1.</span> <span class="nav-text">安装hexo</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#hexo%E9%83%A8%E7%BD%B2git%E6%8F%92%E4%BB%B6"><span class="nav-number">2.3.2.</span> <span class="nav-text">hexo部署git插件</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#hexo%E4%B8%BB%E9%A2%98"><span class="nav-number">2.4.</span> <span class="nav-text">hexo主题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A5%BD%E4%BA%86%EF%BC%8C%E6%97%B6%E9%97%B4%E4%B8%8D%E6%97%A9%E4%BA%86%EF%BC%8C-%E6%99%9A%E5%AE%89%E3%80%82"><span class="nav-number">2.5.</span> <span class="nav-text">好了，时间不早了， 晚安。</span></a></li></ol></li></ol></div>
+      </section>
+      <!--/noindex-->
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">wang007</p>
+  <div class="site-description" itemprop="description">wang007 blog</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </section>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+      
+
+      
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/hello-hexo/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="wang007">
+      <meta itemprop="description" content="wang007 blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wang007 blog">
+    </span>
+
+    
+    
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          hello-hexo
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2019-11-18 00:27:11" itemprop="dateCreated datePublished" datetime="2019-11-18T00:27:11+08:00">2019-11-18</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-01-02 01:44:10" itemprop="dateModified" datetime="2021-01-02T01:44:10+08:00">2021-01-02</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/hexo/" itemprop="url" rel="index"><span itemprop="name">hexo</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
+<p>之前陆陆续续又在写博客，最近几个月以来是越来越懒了，博客也许久未写了，技术相关的东西也没有学多少。应该是到了醒悟的时候，同时这次我把每周一篇博客写进我个人成长的OKR中。</p>
+</blockquote>
+<blockquote>
+<p>作为一枚理工直男，在文字写作方面的能力确实会差了一些。每每在B站看UP主的电影解说的时候，是真的羡慕他们的文字和语言表达能力。就像是以前上学的时候，他们就是经常作文满分的同学，而我就是在及格线上徘徊的渣渣。<br>但是写写技术博客与个人心得，应该是勉强够用了。</p>
+</blockquote>
+<blockquote>
+<p>鉴于折腾这个博客网上花了一些时间，也说不上折腾吧，其实就是自己的脑瓜子不太好使，所以这周的博客决定以弄这个博客网站水上一篇。见谅见谅。</p>
+</blockquote>
+<a id="more"></a>
+
+<h2 id="正题"><a href="#正题" class="headerlink" title="正题"></a>正题</h2><p>考虑到自己建站的麻烦和维护，所以决定把博客到挂到github.io。操作简单方便，而且hexo也有git插件可以一键部署到github.ios上。</p>
+<h3 id="所用到的工具"><a href="#所用到的工具" class="headerlink" title="所用到的工具"></a>所用到的工具</h3><ul>
+<li>github.io</li>
+<li>hexo</li>
+<li>hexo主题next</li>
+<li>以及hexo插件</li>
+</ul>
+<hr>
+<h3 id="github-io"><a href="#github-io" class="headerlink" title="github.io"></a>github.io</h3><ul>
+<li>这玩意是啥，百度一下就有大票答案了。总而言之就是在你的github的仓库上new一个跟你的username同名的{username}.github.io。</li>
+<li>然后把静态的html文件提交到这个仓库中，然后就是访问了。贼简单。</li>
+<li>建好这个仓库先放着，等待后续hexo生成的静态文件提交到这即可。</li>
+<li>提交了html静态文件之后，就可以通过{username}.github.io 例如我的地址：wang007.github.io</li>
+</ul>
+<h3 id="hexo"><a href="#hexo" class="headerlink" title="hexo"></a>hexo</h3><p>首先来说hexo是什么。这个可以直接从hexo白嫖过来。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">快速、简洁且高效的博客框架 - hexo官网</span><br></pre></td></tr></table></figure>
+<p>很显然，这个官网没有说人话。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">hexo 可以理解为是基于node.js制作的一个博客工具，不是我们理解的一个开源的博客系统。其中的差别，有点意思。</span><br><span class="line">hexo 正常来说，不需要部署到我们的服务器上，我们的服务器上保存的，其实是基于在hexo通过markdown编写的文章，然后hexo帮我们生成静态的html页面，然后，将生成的html上传到我们的服务器。简而言之：hexo是个静态页面生成、上传的工具。</span><br><span class="line">白嫖自：https:&#x2F;&#x2F;www.jianshu.com&#x2F;p&#x2F;1c888a6b8297</span><br></pre></td></tr></table></figure>
+<p>上面这段描述是很准确的了。</p>
+<ul>
+<li>hexo只是一个基于node.js的博客制作工具，而不是第一影响理解的blog server。</li>
+<li>用户通过hexo编写md文件，然后生成html相关的静态文件上传到自己的静态服务器上。</li>
+</ul>
+<h4 id="安装hexo"><a href="#安装hexo" class="headerlink" title="安装hexo"></a>安装hexo</h4><p>hexo基于node.js，同时又需要git来拉取代码，所以先安装node.js,npm,git<br>node.js,npm,git安装过程自行搜索，网上大堆资料。</p>
+<p>安装好node.js,npm,git之后，安装hexo-cli，没有安装淘宝镜像源的话 =&gt;   cnpm -&gt; npm</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cnpm install -g hexo-cli</span><br></pre></td></tr></table></figure>
+<p>然后创建一个blog（目录名随意）目录，位置随意。例如：自己的home目录</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir blog</span><br></pre></td></tr></table></figure>
+<p>然后进行目录</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd blog</span><br></pre></td></tr></table></figure>
+<p>执行hexo init命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo init</span><br></pre></td></tr></table></figure>
+<p>不知道是不是只有我这的问题，会报一些超时的错误，当时这里卡了好久。当时网上搜了很久，都没有找到答案。然后直接操作下一个命令。cnpm install，直接就行了，接就行了，就行了，行了，了。<br>所以这里的错误可以先不用理会，直接操作下一个命令。我当时脑瓜子有毛病，在这一步卡了很久。哎，脑子真是个好东西。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">hexo init</span><br><span class="line">INFO  Cloning hexo-starter https:&#x2F;&#x2F;github.com&#x2F;hexojs&#x2F;hexo-starter.git</span><br><span class="line">正克隆到 &#39;&#x2F;Users&#x2F;see&#x2F;bl&#39;...</span><br><span class="line">remote: Enumerating objects: 22, done.</span><br><span class="line">remote: Counting objects: 100% (22&#x2F;22), done.</span><br><span class="line">remote: Compressing objects: 100% (17&#x2F;17), done.</span><br><span class="line">remote: Total 153 (delta 8), reused 9 (delta 3), pack-reused 131</span><br><span class="line">接收对象中: 100% (153&#x2F;153), 29.67 KiB | 394.00 KiB&#x2F;s, 完成.</span><br><span class="line">处理 delta 中: 100% (70&#x2F;70), 完成.</span><br><span class="line">子模组 &#39;themes&#x2F;landscape&#39;（https:&#x2F;&#x2F;github.com&#x2F;hexojs&#x2F;hexo-theme-landscape.git）已对路径 &#39;themes&#x2F;landscape&#39; 注册</span><br><span class="line">正克隆到 &#39;&#x2F;Users&#x2F;see&#x2F;bl&#x2F;themes&#x2F;landscape&#39;...</span><br><span class="line">remote: Enumerating objects: 32, done.        </span><br><span class="line">remote: Counting objects: 100% (32&#x2F;32), done.        </span><br><span class="line">remote: Compressing objects: 100% (25&#x2F;25), done.        </span><br><span class="line">remote: Total 1054 (delta 20), reused 10 (delta 7), pack-reused 1022        </span><br><span class="line">接收对象中: 100% (1054&#x2F;1054), 3.21 MiB | 97.00 KiB&#x2F;s, 完成.</span><br><span class="line">处理 delta 中: 100% (578&#x2F;578), 完成.</span><br><span class="line">Submodule path &#39;themes&#x2F;landscape&#39;: checked out &#39;73a23c51f8487cfcd7c6deec96ccc7543960d350&#39;</span><br><span class="line">INFO  Install dependencies</span><br><span class="line">yarn install v1.19.0</span><br><span class="line">info No lockfile found.</span><br><span class="line">[1&#x2F;4] 🔍  Resolving packages...</span><br><span class="line">warning hexo &gt; nunjucks &gt; chokidar &gt; fsevents@1.2.9: One of your dependencies needs to upgrade to fsevents v2: 1) Proper nodejs v10+ support 2) No more fetching binaries from AWS, smaller package size</span><br><span class="line">[2&#x2F;4] 🚚  Fetching packages...</span><br><span class="line">error Incorrect integrity when fetching from the cache</span><br><span class="line">info Visit https:&#x2F;&#x2F;yarnpkg.com&#x2F;en&#x2F;docs&#x2F;cli&#x2F;install for documentation about this command.</span><br><span class="line">WARN  Failed to install dependencies. Please run &#39;npm install&#39; manually!</span><br></pre></td></tr></table></figure>
+<p>前面说了，不管这里报错，直接先下一个命令试试。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install</span><br></pre></td></tr></table></figure>
+<p>没问题，提示成功之后，然后测试hexo是否安装成功，启动hexo s</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">hexo s</span><br><span class="line">INFO  Start processing</span><br><span class="line">INFO  Hexo is running at http:&#x2F;&#x2F;localhost:4000 . Press Ctrl+C to stop.</span><br></pre></td></tr></table></figure>
+<p>如上提示信息，说明hexo已经安装好了，可以访问<a target="_blank" rel="noopener" href="http://localhost:4000/">http://localhost:4000</a> 看看效果。</p>
+<h4 id="hexo部署git插件"><a href="#hexo部署git插件" class="headerlink" title="hexo部署git插件"></a>hexo部署git插件</h4><p>直接命令行执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
+<p>然后进入到blog目录（hexo init所在的目录），编辑_config.yml文件，deploy在文件最后头。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">git</span>  </span><br><span class="line">  <span class="attr">repo:</span> <span class="string">git@github.com:wang007/wang007.github.io.git</span> <span class="string">//your</span> <span class="string">blog</span> <span class="string">repos</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">master</span>  <span class="string">//</span></span><br></pre></td></tr></table></figure>
+<p>然后ok搞定。<br>此时确保你的git和ssh是配置正确的。否则会失败。</p>
+<p>先执行hexo g，<br>最后执行hexo d，发布到github.io上。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo d</span><br></pre></td></tr></table></figure>
+<p>关于网站的标题，描述等。也在_config.yml文件中。默认在文件开头这里</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Site</span></span><br><span class="line"><span class="attr">title:</span>  <span class="string">标题</span></span><br><span class="line"><span class="attr">subtitle:</span> <span class="string">&#x27;小标题&#x27;</span></span><br><span class="line"><span class="attr">description:</span> <span class="string">&#x27;网站简述&#x27;</span></span><br><span class="line"><span class="attr">keywords:</span> <span class="string">java,asynchronous,high</span> <span class="string">concurrency</span> <span class="string">//网站关键字，可以有多个且必须用英文逗号间隔。</span></span><br><span class="line"><span class="attr">author:</span> <span class="string">wang007</span> <span class="string">//作者</span></span><br><span class="line"><span class="attr">language:</span> <span class="string">zh-CN</span> <span class="string">//</span></span><br><span class="line"><span class="attr">timezone:</span> <span class="string">&#x27;Asia/Shanghai&#x27;</span> <span class="string">//时区</span></span><br></pre></td></tr></table></figure>
+<h3 id="hexo主题"><a href="#hexo主题" class="headerlink" title="hexo主题"></a>hexo主题</h3><p>最后来说说hexo主题，主题这种东西，属于萝卜青菜，各有所爱。这里我选用的使用比较广泛的nexT主题。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># 在blog目录下执行</span><br><span class="line">git clone https:&#x2F;&#x2F;github.com&#x2F;iissnan&#x2F;hexo-theme-next themes&#x2F;next</span><br><span class="line"># 打开blog目录下的 _config.yml，找到theme</span><br><span class="line">theme: next</span><br></pre></td></tr></table></figure>
+<p>然后hexo clean，重新发布一下就能看到效果了。</p>
+<hr>
+<p>next自己也有几个小主题，样式都差不多。next的主题叫做scheme。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># 进入themes&#x2F;next目录下，也有一个叫_config.yml的文件。里面找scheme，然后进行设置</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># Schemes</span><br><span class="line">scheme: Muse</span><br><span class="line">#scheme: Mist</span><br><span class="line">#scheme: Pisces</span><br><span class="line">#scheme: Gemini</span><br></pre></td></tr></table></figure>
+<p>默认情况下，首页标签路径只有Home和Archives。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">menu:</span><br><span class="line">  home: &#x2F; || home</span><br><span class="line">  #about: &#x2F;about&#x2F; || user</span><br><span class="line">  #tags: &#x2F;tags&#x2F; || tags</span><br><span class="line">  #categories: &#x2F;categories&#x2F; || th</span><br><span class="line">  archives: &#x2F;archives&#x2F; || archive</span><br><span class="line">  #schedule: &#x2F;schedule&#x2F; || calendar</span><br><span class="line">  #sitemap: &#x2F;sitemap.xml || sitemap</span><br><span class="line">  #commonweal: &#x2F;404&#x2F; || heartbeat</span><br></pre></td></tr></table></figure>
+<p>可以把相应的注释打开。about，tags，categories。这几个最常用。<br>但是光这样来不行。还在blog目录下的sources创建对应的目录文件才行。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo new page &quot;categories&quot;</span><br></pre></td></tr></table></figure>
+<p>然后~/blog/source/categories目录下就会多一个index.md文件。在文件头添加如下所示。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">title: categories</span><br><span class="line">date: 2019-11-17 23:56:32</span><br><span class="line">type: &quot;categories&quot; &#x2F;&#x2F;一定添加这个</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<p>一定要添加这个type属性，不然就没有categories（分类）的效果。</p>
+<p>tags，about也是如此。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hexo new page &quot;tags&quot;</span><br><span class="line">hexo new page &quot;about&quot;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">title: categories</span><br><span class="line">date: 2019-11-17 23:56:32</span><br><span class="line">type: &quot;tags&quot; &#x2F;&#x2F;一定添加这个，才是标签的功能效果。</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<p>about也是差不多，就是描述关于我的内容。</p>
+<p>至此，好像基本差不多了。<br>还有一个建议，就是把blog目录sources也放到github上，这样就能做一个备份。</p>
+<p>===<br>update: 后续使用hexo图片遇到了图片不显示的问题，最后发现是插件有bug。<br>        这里记录一下：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/3db6a61d3782">https://www.jianshu.com/p/3db6a61d3782</a></p>
+<hr>
+<h3 id="好了，时间不早了，-晚安。"><a href="#好了，时间不早了，-晚安。" class="headerlink" title="好了，时间不早了， 晚安。"></a>好了，时间不早了， 晚安。</h3><hr>
+<p>参考链接：</p>
+<ul>
+<li> <a target="_blank" rel="noopener" href="https://www.jianshu.com/p/3d2e7b3ec182">https://www.jianshu.com/p/3d2e7b3ec182</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/hexo/" rel="tag"># hexo</a>
+              <a href="/tags/github-io/" rel="tag"># github.io</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/interview-question-1/" rel="prev" title="面试题-头条">
+                  <i class="fa fa-chevron-left"></i> 面试题-头条
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+  
+  
+  
+
+
+
+      
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      
+
+      
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">wang007</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.0/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

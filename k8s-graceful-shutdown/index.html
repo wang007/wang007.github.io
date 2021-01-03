@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14.0/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"8.0.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}};
+  </script>
+
+  <meta name="description" content="最近在线上环境个别服务更新时，服务调用方出现 “Connection reset by peer”，经过最终排查发现服务端没有进行 graceful down先交代一下环境：  部署平台: k8s 服务调用: grpc spring boot 服务调用 client 是基于 grpc client 封装的，也仅仅是处理了连接管理。服务发现基于 k8s service">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在 k8s 环境中如何优雅关闭 server">
+<meta property="og:url" content="http://example.com/k8s-graceful-shutdown/index.html">
+<meta property="og:site_name" content="wang007 blog">
+<meta property="og:description" content="最近在线上环境个别服务更新时，服务调用方出现 “Connection reset by peer”，经过最终排查发现服务端没有进行 graceful down先交代一下环境：  部署平台: k8s 服务调用: grpc spring boot 服务调用 client 是基于 grpc client 封装的，也仅仅是处理了连接管理。服务发现基于 k8s service">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-11-01T13:35:52.000Z">
+<meta property="article:modified_time" content="2021-01-01T17:44:10.406Z">
+<meta property="article:author" content="wang007">
+<meta property="article:tag" content="java">
+<meta property="article:tag" content="k8s">
+<meta property="article:tag" content="优雅关闭">
+<meta property="article:tag" content="graceful shutdown">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/k8s-graceful-shutdown/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>在 k8s 环境中如何优雅关闭 server | wang007 blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">wang007 blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <section class="post-toc-wrap sidebar-panel">
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Connection-reset-by-peer-%E5%88%9D%E6%AD%A5%E5%88%86%E6%9E%90"><span class="nav-number">1.</span> <span class="nav-text">1. Connection reset by peer 初步分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-client-%E7%AB%AF%E5%88%9D%E6%AD%A5%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">2. client 端初步分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E5%88%86%E6%9E%90-k8s-%E5%85%B3%E9%97%AD-pod-%E6%B5%81%E7%A8%8B%E5%92%8C-server-%E7%AB%AF-shutdown-%E4%BB%A3%E7%A0%81"><span class="nav-number">3.</span> <span class="nav-text">3. 分析 k8s 关闭 pod 流程和 server 端 shutdown 代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#k8s-%E5%85%B3%E9%97%AD-pod-%E6%B5%81%E7%A8%8B"><span class="nav-number">3.1.</span> <span class="nav-text">k8s 关闭 pod 流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#server-%E7%AB%AF-shutdown-%E4%BB%A3%E7%A0%81"><span class="nav-number">3.2.</span> <span class="nav-text">server 端 shutdown 代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E4%BF%AE%E5%A4%8D"><span class="nav-number">3.3.</span> <span class="nav-text">4. 修复</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </section>
+      <!--/noindex-->
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">wang007</p>
+  <div class="site-description" itemprop="description">wang007 blog</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </section>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+      
+
+      
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/k8s-graceful-shutdown/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="wang007">
+      <meta itemprop="description" content="wang007 blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wang007 blog">
+    </span>
+
+    
+    
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          在 k8s 环境中如何优雅关闭 server
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-11-01 21:35:52" itemprop="dateCreated datePublished" datetime="2020-11-01T21:35:52+08:00">2020-11-01</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-01-02 01:44:10" itemprop="dateModified" datetime="2021-01-02T01:44:10+08:00">2021-01-02</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/" itemprop="url" rel="index"><span itemprop="name">java</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/k8s/" itemprop="url" rel="index"><span itemprop="name">k8s</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>最近在线上环境个别服务更新时，服务调用方出现 “Connection reset by peer”，经过最终排查发现服务端没有进行 graceful down<br>先交代一下环境：</p>
+<ol>
+<li>部署平台: k8s</li>
+<li>服务调用: grpc</li>
+<li>spring boot</li>
+<li>服务调用 client 是基于 grpc client 封装的，也仅仅是处理了连接管理。服务发现基于 k8s service </li>
+</ol>
+<a id="more"></a>
+
+<p>当个别服务更新时，服务调用方出现 “Connection reset by peer” 异常，对应线上环境这种服务更新导致的调用问题是不可接受的，这会影响系统的稳定性。</p>
+<h2 id="1-Connection-reset-by-peer-初步分析"><a href="#1-Connection-reset-by-peer-初步分析" class="headerlink" title="1. Connection reset by peer 初步分析"></a>1. Connection reset by peer 初步分析</h2><p>实际上这是一个很常用的异常，熟悉 tcp 的话应该很清楚。<br>这种情况发现在服务端突然把连接关闭了，客户端不知道，然后继续往服务发送数据，服务端就会返回 rst 包给客户端，最终造成这种现象。</p>
+<p>也就是说，服务端没有进行优雅关闭，去告知到客户端要关闭连接了。但是通过查看服务部署文件实际上和服务端代码，实际上有进行优雅关闭的。</p>
+<h2 id="2-client-端初步分析"><a href="#2-client-端初步分析" class="headerlink" title="2. client 端初步分析"></a>2. client 端初步分析</h2><p>服务端看起来没问题。然后异常又是 client 端报的，而且最重要的是 grpc-client 刚更新一版，让人不得不怀疑到 client 端。<br>深入分析了几天的 grpc 源码，并没有发现异常。而且通过分析源码来解决 bug 的效率非常低下。不得不转头继续分析 server 端。</p>
+<h2 id="3-分析-k8s-关闭-pod-流程和-server-端-shutdown-代码"><a href="#3-分析-k8s-关闭-pod-流程和-server-端-shutdown-代码" class="headerlink" title="3. 分析 k8s 关闭 pod 流程和 server 端 shutdown 代码"></a>3. 分析 k8s 关闭 pod 流程和 server 端 shutdown 代码</h2><p>由于分析源码没有进展而且一进到源码里细节很多，非常耗时间。<br>通过分析 k8s 关闭 pod 流程和 server 端 shutdown 代码，果然发现了蛛丝马迹。</p>
+<h3 id="k8s-关闭-pod-流程"><a href="#k8s-关闭-pod-流程" class="headerlink" title="k8s 关闭 pod 流程"></a>k8s 关闭 pod 流程</h3><p>当 k8s 关闭 pod 时，会把 pod 标记为 “Terminating” 状态和记录一些删除相关的信息。 kubelet 会收到 pod “Terminating”信息，kubelet 开始优雅关闭 pod。</p>
+<ol>
+<li><p>先执行 pod preStop 配置的命令（如果有配置命令的情况下）。</p>
+</li>
+<li><p>在 preStop 执行完时，pod 就会收到 TERM 信号。尝试关闭进程。</p>
+</li>
+<li><p>上述过程是串行执行的，也就是 2 等待 1 执行完。</p>
+</li>
+<li><p>这整个过程称为 graceful shutdown 过程。 k8s 默认等待 graceful shutdown 为 30s，可配置。</p>
+<p>与此同时，会跟此过程 <strong>并行</strong>  <strong>执行 pod 对应 endpoint 的删除</strong>，也就是说在 k8s service LB 中摘除该 pod。<br>但是往往 “删除endpoint 时间” &gt; “删除 pod 时间”。 就是说 LB 中还存在该 pod 路由信息，但是 pod 已经关闭了。<br>这时 client 端就有可能出现 “Connection refused”， http 502 状态码之类的错误。</p>
+<p>所以为了先正确的摘除流量，一般会在 pod preStop sleep 一段时间。而这个服务就是设置 sleep 30s<br>也就是说为了 “删除 endpoint 时间” &lt; “删除 pod 时间”，即service LB 过来到该 pod 流量还能正常处理，一旦 endpoint 删除时，新流量就不会到该 pod 导流量了。<br>sleep 的时间就是等待 “删除 endpoint 时间”，而且这个时间设置很关键。设大设小都不好。设小了跟没设置的效果差不多，设置大了会延长服务部署时间。</p>
+<p>前面说了 graceful shutdown 过程 k8s 默认会等待 30s， 也就是说 preStop sleep 30s 的话，那么给进程关闭的时间就没了，<br>导致进程根本没有时间执行 graceful shutdown。虽然 k8s 再给 2s 进程进行关闭，但是 2s 太小了。<br>所以<strong>当 preStop sleep 设置比较大的值时，一定要注意给到进程的关闭时间。</strong> 可通过参数 pod terminationGracePeriodSeconds 延长 k8s 等待 graceful shutdown 时间。<br>更详细资料参考 <a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination">Pod 的生命周期</a></p>
+</li>
+</ol>
+<h3 id="server-端-shutdown-代码"><a href="#server-端-shutdown-代码" class="headerlink" title="server 端 shutdown 代码"></a>server 端 shutdown 代码</h3><p>当 java 服务端需要优雅关闭时，最原始的方式可以往 Runtime 类里 register shutdown hook，例如</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Main</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Runtime.getRuntime().addShutdownHook(<span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;exec on shutdown hook&quot;</span>);</span><br><span class="line">        &#125;));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但是一般情况下，我们用的是 spring。那么 spring 有多种方式来执行 shutdown hook， 例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"> <span class="meta">@Component</span></span><br><span class="line"> <span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Main</span> <span class="keyword">implements</span> <span class="title">DisposableBean</span> </span>&#123;</span><br><span class="line">     <span class="meta">@Override</span></span><br><span class="line">     <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">         System.out.println(<span class="string">&quot;exec on shutdown hook&quot;</span>);</span><br><span class="line">     &#125;</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PreStopTest</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@PreDestroy</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">stop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;exec on shutdown hook&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//或者监听 ContextClosedEvent 等等方式</span></span><br></pre></td></tr></table></figure>
+<p>spring 的实现最终也是往 Runtime register shutdown hook 的，具体代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">AbstractApplicationContext</span> <span class="keyword">extends</span> <span class="title">DefaultResourceLoader</span></span></span><br><span class="line"><span class="class">		<span class="keyword">implements</span> <span class="title">ConfigurableApplicationContext</span>, <span class="title">DisposableBean</span> </span>&#123;</span><br><span class="line">        </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">registerShutdownHook</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		    <span class="keyword">if</span> (<span class="keyword">this</span>.shutdownHook == <span class="keyword">null</span>) &#123;</span><br><span class="line">		    	<span class="comment">// No shutdown hook registered yet.</span></span><br><span class="line">		    	<span class="keyword">this</span>.shutdownHook = <span class="keyword">new</span> Thread() &#123;</span><br><span class="line">		    		<span class="meta">@Override</span></span><br><span class="line">		    		<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		    			<span class="keyword">synchronized</span> (startupShutdownMonitor) &#123;</span><br><span class="line">		    				doClose();</span><br><span class="line">		    			&#125;</span><br><span class="line">		    		&#125;</span><br><span class="line">		    	&#125;;</span><br><span class="line">		    	Runtime.getRuntime().addShutdownHook(<span class="keyword">this</span>.shutdownHook);</span><br><span class="line">		    &#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>shutdownHook 线程里中的 doClose 方法就是执行各种 shutdown 操作，包括前面提到 DisposableBean<br>@PreDestroy ContextClosedEvent 等。</p>
+<p>而问题往往会出现优雅关闭的处理上，例如为了 servlet 容器能安全的关闭，往往会等待 servlet 容器关闭，那么阻塞等待就会导致后面的 bean 没机会执行 shutdown。<br>这次的 bug 主要就是因为 servlet 容器等待阻塞了 30s，导致 grpc server 没机会执行 shutdown。</p>
+<h3 id="4-修复"><a href="#4-修复" class="headerlink" title="4. 修复"></a>4. 修复</h3><p>根据前面的分析，引起这次 bug 的主要有两个。</p>
+<ol>
+<li><p>pod preStop sleep 时间的设置<br>这个跟运维商量之后，这个值是经过生产可靠的值。那么就不修改这个值，而是修改 pod terminationGracePeriodSeconds = 50s，<br>把 k8s 等待 graceful shutdown 时间改成50s，相当于给进程 20s 的关闭时间。</p>
+</li>
+<li><p>servlet 容器阻塞等待导致后面的 bean 没机会执行<br>像 servlet 容器，grpc server 这种比较大资源的关闭且需要阻塞等待的，通过直接往 Runtime register<br>shutdown hook的方式，这种就不会影响其他 bean 执行 shutdown。 例如</p>
+</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Thread jettyShutdownHook = <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">    <span class="comment">// do something, 例如等待阻塞时间计算</span></span><br><span class="line">     <span class="keyword">try</span> &#123;</span><br><span class="line">          server.stop();</span><br><span class="line">          log.info(<span class="string">&quot;Jetty server stopped.&quot;</span>);</span><br><span class="line">     &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">          log.error(<span class="string">&quot;Fail to shutdown gracefully.&quot;</span>, e);</span><br><span class="line">     &#125;</span><br><span class="line">&#125;);</span><br><span class="line">jettyShutdownHook.setDaemon(<span class="keyword">false</span>);</span><br><span class="line">jettyShutdownHook.setName(<span class="string">&quot;jetty-shutdown-hook-thread&quot;</span>);</span><br><span class="line">Runtime.getRuntime().addShutdownHook(jettyShutdownHook);</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Thread grpcShutdownHook = <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">     <span class="keyword">try</span> &#123;</span><br><span class="line">          <span class="keyword">this</span>.destroy();</span><br><span class="line">     &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">          log.error(<span class="string">&quot;&quot;</span>, e);</span><br><span class="line">     &#125;</span><br><span class="line">&#125;);</span><br><span class="line">grpcShutdownHook.setName(<span class="string">&quot;grpc-shutdown-hook-thread&quot;</span>);</span><br><span class="line">grpcShutdownHook.setDaemon(<span class="keyword">false</span>);</span><br><span class="line">Runtime.getRuntime().addShutdownHook(grpcShutdownHook);</span><br></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
+<li><p>平时我们写代码往往会忽略掉优雅关闭的问题，但是这些不起眼的小细节反而可能导致一些难以排查的<br>bug。所以平时写代码要注意优雅关闭的情况和资源释放的问题。</p>
+</li>
+<li><p>优雅停机的第一步就是停流量，在 k8s 环境里就是等待 endpoint 和 删除 endpoint 过程流量导到即将删除<br>pod 时，pod 还能正常处理。 所以一般通过 pod preStop sleep 一段时间的方式解决，在 sleep 时期，pod 还是正常运行的，即能正常处理流量。   </p>
+</li>
+<li><p>需要在 shutdown 时，阻塞等待的 bean，可以通过直接往 Runtime register shutdown hook 方式来解决（当然其他方式亦可），不阻塞 spring 其他 bean 执行。</p>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/java/" rel="tag"># java</a>
+              <a href="/tags/k8s/" rel="tag"># k8s</a>
+              <a href="/tags/%E4%BC%98%E9%9B%85%E5%85%B3%E9%97%AD/" rel="tag"># 优雅关闭</a>
+              <a href="/tags/graceful-shutdown/" rel="tag"># graceful shutdown</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/gradle-get-started/" rel="prev" title="gradle 上手">
+                  <i class="fa fa-chevron-left"></i> gradle 上手
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/java-async-road-6/" rel="next" title="java异步编程探究-Project Reactor实现原理-3">
+                  java异步编程探究-Project Reactor实现原理-3 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+  
+  
+  
+
+
+
+      
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      
+
+      
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">wang007</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.0/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
