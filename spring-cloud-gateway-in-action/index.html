@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14.0/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"8.0.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}};
+  </script>
+
+  <meta name="description" content="零上篇文章简单介绍了 spring-cloud-gateway 上手和一些基本原理，接下来这篇文章来讲讲如何在业务中使用 spring-cloud-gateway。   在上篇文章讲的示例代码，都是通过 配置文件 和 代码的方式 硬编码定义 Route，更新 Route 还得通过重启网关实例。网关作为微服务的统一入口，为后端服务做代理业务。而是后端服务的入口是经常改变的。如果后端服务改动一下路由，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="spring-cloud-gateway 动态路由实现分析">
+<meta property="og:url" content="http://example.com/spring-cloud-gateway-in-action/index.html">
+<meta property="og:site_name" content="wang007 blog">
+<meta property="og:description" content="零上篇文章简单介绍了 spring-cloud-gateway 上手和一些基本原理，接下来这篇文章来讲讲如何在业务中使用 spring-cloud-gateway。   在上篇文章讲的示例代码，都是通过 配置文件 和 代码的方式 硬编码定义 Route，更新 Route 还得通过重启网关实例。网关作为微服务的统一入口，为后端服务做代理业务。而是后端服务的入口是经常改变的。如果后端服务改动一下路由，">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-02-07T08:05:15.000Z">
+<meta property="article:modified_time" content="2021-02-08T12:31:39.743Z">
+<meta property="article:author" content="wang007">
+<meta property="article:tag" content="k8s">
+<meta property="article:tag" content="spring-cloud-gateway">
+<meta property="article:tag" content="spring webflux">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/spring-cloud-gateway-in-action/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>spring-cloud-gateway 动态路由实现分析 | wang007 blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">wang007 blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <section class="post-toc-wrap sidebar-panel">
+          <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9B%B6"><span class="nav-number">1.</span> <span class="nav-text">零</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%AD%A3%E6%96%87"><span class="nav-number">2.</span> <span class="nav-text">正文</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#spring-cloud-gateway-%E8%87%AA%E5%B8%A6%E5%8A%A8%E6%80%81%E8%B7%AF%E7%94%B1%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="nav-number">2.0.1.</span> <span class="nav-text">spring-cloud-gateway 自带动态路由的方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DiscoveryClientRouteDefinitionLocator-%E5%8A%A8%E6%80%81%E8%B7%AF%E7%94%B1%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="nav-number">2.0.2.</span> <span class="nav-text">DiscoveryClientRouteDefinitionLocator 动态路由的方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">2.0.3.</span> <span class="nav-text">小结</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E-k8s-%E5%AE%9E%E7%8E%B0%E5%8A%A8%E6%80%81%E8%B7%AF%E7%94%B1"><span class="nav-number">2.0.4.</span> <span class="nav-text">基于 k8s 实现动态路由</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-Route-%E5%AE%9A%E4%B9%89%E5%88%B0-deployment-annotations"><span class="nav-number">2.0.4.1.</span> <span class="nav-text">1. Route 定义到 deployment annotations</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-gateway-list-and-watch-k8s-deployment-%E7%AD%89%E8%B5%84%E6%BA%90%E3%80%82"><span class="nav-number">2.0.4.2.</span> <span class="nav-text">2. gateway list and watch k8s deployment 等资源。</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E8%AF%BB%E5%8F%96-Route-%E4%BF%A1%E6%81%AF%E5%81%9A-diff%EF%BC%8C%E6%9C%80%E7%BB%88-%E6%B7%BB%E5%8A%A0%E6%88%96%E5%88%A0%E9%99%A4-%E5%88%B0-RouteLocator"><span class="nav-number">2.0.4.3.</span> <span class="nav-text">3. 读取 Route 信息做 diff，最终 添加或删除 到 RouteLocator</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E5%88%B7%E6%96%B0-Route"><span class="nav-number">2.0.4.4.</span> <span class="nav-text">4. 刷新 Route</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-%E4%BD%BF%E7%94%A8-crd-%E7%9A%84%E6%96%B9%E5%BC%8F%E9%85%8D%E7%BD%AE-Route"><span class="nav-number">2.0.4.5.</span> <span class="nav-text">5. 使用 crd 的方式配置 Route</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </section>
+      <!--/noindex-->
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">wang007</p>
+  <div class="site-description" itemprop="description">wang007 blog</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">14</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </section>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+      
+
+      
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/spring-cloud-gateway-in-action/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="wang007">
+      <meta itemprop="description" content="wang007 blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wang007 blog">
+    </span>
+
+    
+    
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          spring-cloud-gateway 动态路由实现分析
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-02-07 16:05:15" itemprop="dateCreated datePublished" datetime="2021-02-07T16:05:15+08:00">2021-02-07</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-02-08 20:31:39" itemprop="dateModified" datetime="2021-02-08T20:31:39+08:00">2021-02-08</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/spring-webflux/" itemprop="url" rel="index"><span itemprop="name">spring webflux</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/spring-webflux/%E5%BC%82%E6%AD%A5/" itemprop="url" rel="index"><span itemprop="name">异步</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="零"><a href="#零" class="headerlink" title="零"></a>零</h1><p>上篇文章简单介绍了 spring-cloud-gateway 上手和一些基本原理，接下来这篇文章来讲讲如何在业务中使用 spring-cloud-gateway。  </p>
+<p>在上篇文章讲的示例代码，都是通过 <strong>配置文件 和 代码的方式</strong> 硬编码定义 Route，更新 Route 还得通过重启网关实例。<br>网关作为微服务的统一入口，为后端服务做代理业务。而是后端服务的入口是经常改变的。如果后端服务改动一下路由，网关也要跟着更新，那么对于网关来说就是个灾难。<br>而且时常处于更新阶段也对整个网站的稳定性带来很大的挑战。所以这种硬编码的方式是一定要规避的。<br>接下来讲讲实现动态路由的思路。</p>
+<a id="more"></a>
+
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h3 id="spring-cloud-gateway-自带动态路由的方式"><a href="#spring-cloud-gateway-自带动态路由的方式" class="headerlink" title="spring-cloud-gateway 自带动态路由的方式"></a>spring-cloud-gateway 自带动态路由的方式</h3><p>实际上，spring-cloud-gateway 本身是有对动态 Route 做支持的，但是太鸡肋了。<br>在 AbstractGatewayControllerEndpoint 类中</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@PostMapping(&quot;/routes/&#123;id&#125;&quot;)</span></span><br><span class="line"><span class="keyword">public</span> Mono&lt;ResponseEntity&lt;Object&gt;&gt; save(<span class="meta">@PathVariable</span> String id,</span><br><span class="line">		<span class="meta">@RequestBody</span> RouteDefinition route) &#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> Mono.just(route).filter(<span class="keyword">this</span>::validateRouteDefinition)</span><br><span class="line">			.flatMap(routeDefinition -&gt; <span class="keyword">this</span>.routeDefinitionWriter</span><br><span class="line">					.save(Mono.just(routeDefinition).map(r -&gt; &#123;</span><br><span class="line">						r.setId(id);</span><br><span class="line">						log.debug(<span class="string">&quot;Saving route: &quot;</span> + route);</span><br><span class="line">						<span class="keyword">return</span> r;</span><br><span class="line">					&#125;))</span><br><span class="line">					.then(Mono.defer(() -&gt; Mono.just(ResponseEntity</span><br><span class="line">							.created(URI.create(<span class="string">&quot;/routes/&quot;</span> + id)).build()))))</span><br><span class="line">			.switchIfEmpty(</span><br><span class="line">					Mono.defer(() -&gt; Mono.just(ResponseEntity.badRequest().build())));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过 http 接口的方式，最终调用 routeDefinitionWriter#save 方法保存 Route。<br>而 routeDefinitionWriter 的默认实现 InMemoryRouteDefinitionRepository，在 GatewayAutoConfiguration 类中定义</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="meta">@ConditionalOnMissingBean(RouteDefinitionRepository.class)</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> InMemoryRouteDefinitionRepository <span class="title">inMemoryRouteDefinitionRepository</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">new</span> InMemoryRouteDefinitionRepository();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">InMemoryRouteDefinitionRepository</span> <span class="keyword">implements</span> <span class="title">RouteDefinitionRepository</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, RouteDefinition&gt; routes = synchronizedMap(</span><br><span class="line">			<span class="keyword">new</span> LinkedHashMap&lt;String, RouteDefinition&gt;());</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> Mono&lt;Void&gt; <span class="title">save</span><span class="params">(Mono&lt;RouteDefinition&gt; route)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> route.flatMap(r -&gt; &#123;</span><br><span class="line">			<span class="keyword">if</span> (StringUtils.isEmpty(r.getId())) &#123;</span><br><span class="line">				<span class="keyword">return</span> Mono.error(<span class="keyword">new</span> IllegalArgumentException(<span class="string">&quot;id may not be empty&quot;</span>));</span><br><span class="line">			&#125;</span><br><span class="line">			routes.put(r.getId(), r);</span><br><span class="line">			<span class="keyword">return</span> Mono.empty();</span><br><span class="line">		&#125;);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> Mono&lt;Void&gt; <span class="title">delete</span><span class="params">(Mono&lt;String&gt; routeId)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> routeId.flatMap(id -&gt; &#123;</span><br><span class="line">			<span class="keyword">if</span> (routes.containsKey(id)) &#123;</span><br><span class="line">				routes.remove(id);</span><br><span class="line">				<span class="keyword">return</span> Mono.empty();</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> Mono.defer(() -&gt; Mono.error(</span><br><span class="line">					<span class="keyword">new</span> NotFoundException(<span class="string">&quot;RouteDefinition not found: &quot;</span> + routeId)));</span><br><span class="line">		&#125;);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> Flux&lt;RouteDefinition&gt; <span class="title">getRouteDefinitions</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> Flux.fromIterable(routes.values());</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>InMemoryRouteDefinitionRepository 实际上是把 Route 信息保存到 map 中。<br>getRouteDefinitions 方法返回的 RouteDefinition 最终会转成 Route。</p>
+<p>这种方式的缺点：</p>
+<ol>
+<li>网关通常是多实例部署的，这种方式显然没有处理多实例同步 Route 信息。</li>
+<li>Route 信息中保存内存中，没有持久化保存。</li>
+</ol>
+<p>根据这两个缺点，基本就可以确定不具备生产可用的条件。</p>
+<h3 id="DiscoveryClientRouteDefinitionLocator-动态路由的方式"><a href="#DiscoveryClientRouteDefinitionLocator-动态路由的方式" class="headerlink" title="DiscoveryClientRouteDefinitionLocator 动态路由的方式"></a>DiscoveryClientRouteDefinitionLocator 动态路由的方式</h3><p>这种方式通过 DiscoveryClient 方式从注册中心获取实例，然后根据 ServiceInstance 定义的 serviceId 作为路径前缀匹配。<br>这种方式灵活性太差，而且路由路径跟 serviceId 强绑定。同样不具备生产可用。</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>虽然 spring-cloud-gateway 提供了一些动态路由的实现，但是这些实现都太鸡肋了，基本上不具备生产可用的条件。</p>
+<hr>
+<h3 id="基于-k8s-实现动态路由"><a href="#基于-k8s-实现动态路由" class="headerlink" title="基于 k8s 实现动态路由"></a>基于 k8s 实现动态路由</h3><p>deployment 作为 k8s 的部署，deployment 作为每个服务的部署单元，那么 Route 信息也可以放到 deployment 上。  </p>
+<p>实现思路：</p>
+<ol>
+<li>Route 信息和其他信息（例如权限相关的信息）放到 deployment annotations 上。</li>
+<li>网关 list and watch k8s deployment，service 等资源。</li>
+<li>从 deployment 读取 Route 信息，然后做 diff，最终 添加或删除 到 RouteLocator。</li>
+<li>发送 RefreshRoutesEvent 事件，刷新 Route。</li>
+</ol>
+<h4 id="1-Route-定义到-deployment-annotations"><a href="#1-Route-定义到-deployment-annotations" class="headerlink" title="1. Route 定义到 deployment annotations"></a>1. Route 定义到 deployment annotations</h4><p>Route 定义可以直接按照 gateway 那套配置文件的定义，转成 json 的方式放到 deployment annotations 上，或者自己额外做拓展。</p>
+<h4 id="2-gateway-list-and-watch-k8s-deployment-等资源。"><a href="#2-gateway-list-and-watch-k8s-deployment-等资源。" class="headerlink" title="2. gateway list and watch k8s deployment 等资源。"></a>2. gateway list and watch k8s deployment 等资源。</h4><p>直接使用 kubernetes:client-java 类库实现 list and watch。然后对应的服务 deployment 任何更新都会通知到 gateway。<br>而且使用 deployment 部署有个好处是明确知道 该 deployment 对应的后端服务，对应服务的 Route 也可以因 deployment 做隔离。  </p>
+<p>或许你有个疑问，这里为啥还要 watch service 呢？<br>因为 deployment 和 service 的 labels 都有 app 标签，那么 deployment 和 service 可以跟 app 关联起来，那么 Route#uri 可以直接从 service 中读取，省去手动配置 Route#uri。</p>
+<p>这其中同一个服务 deployment，service 有先后部署的问题。  </p>
+<ul>
+<li>service 先部署，deployment 后部署。直接读取 service 即可，补充到 Route#uri 上。</li>
+<li>deployment 先部署，service 后部署。那么需要把读取到 Route 先保存中间状态，待 service 部署上来之后继续往下执行 Route 处理逻辑。</li>
+</ul>
+<h4 id="3-读取-Route-信息做-diff，最终-添加或删除-到-RouteLocator"><a href="#3-读取-Route-信息做-diff，最终-添加或删除-到-RouteLocator" class="headerlink" title="3. 读取 Route 信息做 diff，最终 添加或删除 到 RouteLocator"></a>3. 读取 Route 信息做 diff，最终 添加或删除 到 RouteLocator</h4><p>由于每次部署改动了啥，是需要跟上次部署资源（deployment）做比较的。比较出差异就是 diff。然后在根据 diff 的结果做 添加或删除 Route 到 RouteLocator。 </p>
+<h4 id="4-刷新-Route"><a href="#4-刷新-Route" class="headerlink" title="4. 刷新 Route"></a>4. 刷新 Route</h4><p>由于 CachingRouteLocator 有缓存，更新完 RouteLocator 不会马上生效。所以需要再发送 RefreshRoutesEvent 事件刷新缓存。</p>
+<p><strong>以上这种方式是我在公司内部落地并已稳定运行半年多了。</strong></p>
+<h4 id="5-使用-crd-的方式配置-Route"><a href="#5-使用-crd-的方式配置-Route" class="headerlink" title="5. 使用 crd 的方式配置 Route"></a>5. 使用 crd 的方式配置 Route</h4><p>当然这里直接使用的是 deployment annotations 会少了配置错误的语法检测。直到部署完 gateway watch 到 deployment 才知道。<br>为了避免这个问题，可以通过 crd 的方式定义 Route，然后 gateway watch route crd，做 diff，最终 添加或删除 到 RouteLocator，跟使用 deployment annotations 方式差不多，区别就是获取 Route 的渠道不同而已。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><ol>
+<li>spring-cloud-gateway 离直接落地还是有一定的差距的，需要不少的二次开发。</li>
+<li>动态 Route 对于生产可用的 gateway 来说是强需求，但是 spring-cloud-gateway 支持的比较差。</li>
+<li>k8s 作为基础设施做拓展是比较便捷的。</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/k8s/" rel="tag"># k8s</a>
+              <a href="/tags/spring-cloud-gateway/" rel="tag"># spring-cloud-gateway</a>
+              <a href="/tags/spring-webflux/" rel="tag"># spring webflux</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/spring-cloud-gateway-source/" rel="prev" title="spring-cloud-gateway 源码分析">
+                  <i class="fa fa-chevron-left"></i> spring-cloud-gateway 源码分析
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/spring-cloud-gateway-get-started/" rel="next" title="spring-cloud-gateway 上手">
+                  spring-cloud-gateway 上手 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+  
+  
+  
+
+
+
+      
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      
+
+      
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">wang007</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.0/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

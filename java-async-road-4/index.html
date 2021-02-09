@@ -22,12 +22,12 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"8.0.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}};
   </script>
 
-  <meta name="description" content="零上一篇文章简单介绍了响应式编程的概念和具体的实现Project Reactor以及响应式流规范定义的所有接口。这篇文章将深入内部探究Project Reactor实现原理。实际上Project Reactor实现方式和代码风格跟Rxjava非常相似，所以理解了Project Reactor内部的运行原理，那么Rxjava也八九不离十了。而且Rxjava除了Flowable之外都是没背压的，所以实">
+  <meta name="description" content="零上一篇文章简单介绍了响应式编程的概念和具体的实现 Project Reactor 以及 响应式流规范定义的所有接口。这篇文章将深入内部探究 Project Reactor 实现原理。实际上 Project Reactor 实现方式和代码风格跟 Rxjava 非常相似，所以理解了 Project Reactor 内部的运行原理，那么 Rxjava 也八九不离十了。而且 Rxjava 除了 Flow">
 <meta property="og:type" content="article">
-<meta property="og:title" content="java异步编程探究-Project Reactor实现原理">
+<meta property="og:title" content="java 异步编程探究-Project Reactor实现原理">
 <meta property="og:url" content="http://example.com/java-async-road-4/index.html">
 <meta property="og:site_name" content="wang007 blog">
-<meta property="og:description" content="零上一篇文章简单介绍了响应式编程的概念和具体的实现Project Reactor以及响应式流规范定义的所有接口。这篇文章将深入内部探究Project Reactor实现原理。实际上Project Reactor实现方式和代码风格跟Rxjava非常相似，所以理解了Project Reactor内部的运行原理，那么Rxjava也八九不离十了。而且Rxjava除了Flowable之外都是没背压的，所以实">
+<meta property="og:description" content="零上一篇文章简单介绍了响应式编程的概念和具体的实现 Project Reactor 以及 响应式流规范定义的所有接口。这篇文章将深入内部探究 Project Reactor 实现原理。实际上 Project Reactor 实现方式和代码风格跟 Rxjava 非常相似，所以理解了 Project Reactor 内部的运行原理，那么 Rxjava 也八九不离十了。而且 Rxjava 除了 Flow">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/java-async-road-4/nengyongjiuxing.jpg">
 <meta property="og:image" content="http://example.com/java-async-road-4/mono-def.jpg">
@@ -37,7 +37,7 @@
 <meta property="og:image" content="http://example.com/java-async-road-4/MonoMap.png">
 <meta property="og:image" content="http://example.com/java-async-road-4/MonoFlatMap.png">
 <meta property="article:published_time" content="2019-12-24T14:56:09.000Z">
-<meta property="article:modified_time" content="2021-01-01T17:44:10.391Z">
+<meta property="article:modified_time" content="2021-01-28T07:22:18.638Z">
 <meta property="article:author" content="wang007">
 <meta property="article:tag" content="java">
 <meta property="article:tag" content="异步">
@@ -61,7 +61,7 @@
   };
 </script>
 
-  <title>java异步编程探究-Project Reactor实现原理 | wang007 blog</title>
+  <title>java 异步编程探究-Project Reactor实现原理 | wang007 blog</title>
   
 
 
@@ -207,20 +207,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-count">14</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-count">19</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -272,7 +272,7 @@
     
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          java异步编程探究-Project Reactor实现原理
+          java 异步编程探究-Project Reactor实现原理
         </h1>
 
         <div class="post-meta-container">
@@ -290,7 +290,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-01-02 01:44:10" itemprop="dateModified" datetime="2021-01-02T01:44:10+08:00">2021-01-02</time>
+        <time title="修改时间：2021-01-28 15:22:18" itemprop="dateModified" datetime="2021-01-28T15:22:18+08:00">2021-01-28</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -324,15 +324,15 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="零"><a href="#零" class="headerlink" title="零"></a>零</h2><p>上一篇文章简单介绍了响应式编程的概念和具体的实现<a target="_blank" rel="noopener" href="https://projectreactor.io/">Project Reactor</a>以及<a href="www.reactive-streams.org">响应式流</a>规范定义的所有接口。<br>这篇文章将深入内部探究Project Reactor实现原理。实际上Project Reactor实现方式和代码风格跟Rxjava非常相似，所以理解了Project Reactor内部的运行原理，那么Rxjava也八九不离十了。而且Rxjava除了Flowable之外都是没背压的，所以实现上总体会简单一点。</p>
+        <h2 id="零"><a href="#零" class="headerlink" title="零"></a>零</h2><p>上一篇文章简单介绍了响应式编程的概念和具体的实现 <a target="_blank" rel="noopener" href="https://projectreactor.io/">Project Reactor</a> 以及 <a href="www.reactive-streams.org">响应式流</a>规范定义的所有接口。<br>这篇文章将深入内部探究 Project Reactor 实现原理。实际上 Project Reactor 实现方式和代码风格跟 Rxjava 非常相似，所以理解了 Project Reactor 内部的运行原理，那么 Rxjava 也八九不离十了。而且 Rxjava 除了 Flowable 之外都是没背压的，所以实现上总体会简单一点。</p>
 <a id="more"></a>
 
 <p>名字解释：</p>
 <ul>
-<li>数据源：例如MonoJust（即Mono#just方法）、MonoDefer（即Mono#defer方法）等等。</li>
-<li>操作符：例如map、flatMap等等。即创建好实例之后调用的所有对数据源进行操作的方法。</li>
-<li>上游：  例如Mono.just(“s”).map(s -&gt; s).flatMap() just是map的上游， map操作符是flatMap的上游。</li>
-<li>下游：  跟下游相反。上例map是just的下游，flatMap是map的下游。</li>
+<li>数据源：例如 MonoJust（即Mono#just方法）、MonoDefer（即Mono#defer方法）等等。</li>
+<li>操作符：例如 map、flatMap 等等。即创建好实例之后调用的所有对数据源进行操作的方法。</li>
+<li>上游：  例如 Mono.just(“s”).map(s -&gt; s).flatMap() just 是 map 的上游， map 操作符是 flatMap 的上游。</li>
+<li>下游：  跟下游相反。上例 map 是 just 的下游，flatMap 是 map 的下游。</li>
 </ul>
 <p>这里说个看源码的小技巧。</p>
 <ul>
@@ -342,20 +342,20 @@
 <li>顺着主流程脉络往下走，可以忽略次流程。待主流程理解了之后，再选择性看次流程。</li>
 </ul>
 <p>或者你有比较好的技巧也可以。千万别干撸，不然很容易就怀疑人生。<br><img src="/java-async-road-4/nengyongjiuxing.jpg"></p>
-<h2 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h2><p>先从上篇文章举的例子作为这次源码分析主流程。<br>因为Mono发射0|1个数据，所以内部实现会稍微简单一点。先简单分析一下Mono，然后再深入Flux。</p>
+<h2 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h2><p>先从上篇文章举的例子作为这次源码分析主流程。<br>因为 Mono 发射 0|1个数据，所以内部实现会稍微简单一点。先简单分析一下 Mono，然后再深入 Flux。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">Mono.just(<span class="string">&quot;name&quot;</span>)                       <span class="comment">//创建发射单个数据的数据源Mono</span></span><br><span class="line">    .map(str -&gt; str + <span class="string">&quot;: wang007&quot;</span>)      <span class="comment">//对数据进行转换</span></span><br><span class="line">    .flatMap(str -&gt; &#123;                   <span class="comment">//平铺</span></span><br><span class="line">        System.out.println(<span class="string">&quot;str -&gt; &quot;</span> + str);</span><br><span class="line">        <span class="keyword">return</span> Mono.just(str.length());</span><br><span class="line">    &#125;)</span><br><span class="line">    .map(len -&gt; len + <span class="string">&quot;&quot;</span> + len)                <span class="comment">//再转换，转换成String的长度</span></span><br><span class="line">    .filter(lenStr -&gt; lenStr.length() &gt; <span class="number">5</span>)     <span class="comment">//过滤</span></span><br><span class="line">    .subscribe(str -&gt; &#123;                        <span class="comment">//订阅</span></span><br><span class="line">        System.out.println(<span class="string">&quot;result -&gt; &quot;</span> + str);</span><br><span class="line">    &#125;, err -&gt; &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;onError&quot;</span>);</span><br><span class="line">        err.printStackTrace();</span><br><span class="line">    &#125;, () -&gt; &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;onComplete&quot;</span>);</span><br><span class="line">    &#125;, subscription -&gt; subscription.request(Long.MAX_VALUE));</span><br></pre></td></tr></table></figure>
-<p>1 Mono就是Reactive Stream规范的Publisher<br>2 subscribe方法中的几个lambda表达式作为会组成Subscriber</p>
-<p>在使用Mono|Flux主要有4个过程</p>
+<p>1 Mono 就是 Reactive Stream 规范的 Publisher<br>2 subscribe 方法中的几个 lambda 表达式作为会组成 Subscriber</p>
+<p>在使用 Mono|Flux 主要有4个过程</p>
 <ol>
-<li>定义阶段。上面的just、map、flatMap等方法</li>
-<li>订阅阶段。上面的subscribe方法</li>
-<li>onSubscribe阶段。上面subscribe方法最后一个lambda表达式:subscription-&gt;subscription.request(Long.MAX_VALUE)</li>
-<li>发射数据。 数据会从just方法内部开始往下游流动。记住：数据并不是线性流动的。先遇到flatMap，concatMap等这类操作一般是未完成的结果时，所以内部表象是流动到flatMap时好像是突然停了，待flatMap结果真正完成时，数据又从flatMap开始往下游流动</li>
+<li>定义阶段。上面的 just、map、flatMap 等方法</li>
+<li>订阅阶段。上面的 subscribe 方法</li>
+<li>onSubscribe 阶段。上面 subscribe 方法最后一个 lambda 表达式:subscription-&gt;subscription.request(Long.MAX_VALUE)</li>
+<li>发射数据。 数据会从 just 方法内部开始往下游流动。记住：数据并不是线性流动的。先遇到 flatMap，concatMap 等这类操作一般是未完成的结果时，所以内部表象是流动到 flatMap 时好像是突然停了，待 flatMap 结果真正完成时，数据又从 flatMap 开始往下游流动</li>
 </ol>
-<h3 id="定义阶段"><a href="#定义阶段" class="headerlink" title="定义阶段"></a>定义阶段</h3><p>实际上，Mono|Flux中每个操作符都会创建一个新的Mono|Flux，并把原来的Mono|Flux包裹在里面。像极了俄罗斯套娃。</p>
+<h3 id="定义阶段"><a href="#定义阶段" class="headerlink" title="定义阶段"></a>定义阶段</h3><p>实际上，Mono|Flux 中每个操作符都会创建一个新的 Mono|Flux，并把原来的 Mono|Flux 包裹在里面。像极了俄罗斯套娃。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> &lt;R&gt; <span class="function">Mono&lt;R&gt; <span class="title">map</span><span class="params">(Function&lt;? <span class="keyword">super</span> T, ? extends R&gt; mapper)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (<span class="keyword">this</span> <span class="keyword">instanceof</span> Fuseable) &#123;</span><br><span class="line">		<span class="keyword">return</span> onAssembly(<span class="keyword">new</span> MonoMapFuseable&lt;&gt;(<span class="keyword">this</span>, mapper));</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> onAssembly(<span class="keyword">new</span> MonoMap&lt;&gt;(<span class="keyword">this</span>, mapper));</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">public</span> <span class="keyword">final</span> &lt;R&gt; <span class="function">Mono&lt;R&gt; <span class="title">flatMap</span><span class="params">(Function&lt;? <span class="keyword">super</span> T, ? extends Mono&lt;? extends R&gt;&gt; transformer)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> onAssembly(<span class="keyword">new</span> MonoFlatMap&lt;&gt;(<span class="keyword">this</span>, transformer));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>所以整个定义过程就是<br><img src="/java-async-road-4/mono-def.jpg" alt="Mono的定义过程"><br>这些对象Mono的子类，除了MonoJust，其他的MonoMap、MonoFlatMap等内部一般都有一个source属性保存自己的直属上游。</p>
-<h3 id="订阅阶段"><a href="#订阅阶段" class="headerlink" title="订阅阶段"></a>订阅阶段</h3><p>上面的subscribe方法中lambda表达式会组成一个Subscriber的实现：<strong>reactor.core.publisher.LambdaMonoSubscriber</strong><br>然后这个subscriber会一直往上游层层包装，一直到MonoJust。这个也像是俄罗斯套娃。<br>所以整个订阅过程就是<br><img src="/java-async-road-4/subscriber.jpg" alt="Mono的订阅过程"></p>
+<p>所以整个定义过程就是<br><img src="/java-async-road-4/mono-def.jpg" alt="Mono的定义过程"><br>这些对象 Mono 的子类，除了 MonoJust，其他的 MonoMap、MonoFlatMap 等内部一般都有一个 source 属性保存自己的直属上游。</p>
+<h3 id="订阅阶段"><a href="#订阅阶段" class="headerlink" title="订阅阶段"></a>订阅阶段</h3><p>上面的 subscribe 方法中 lambda 表达式会组成一个 Subscriber 的实现：<strong>reactor.core.publisher.LambdaMonoSubscriber</strong><br>然后这个 subscriber 会一直往上游层层包装，一直到 MonoJust。这个也像是俄罗斯套娃。<br>所以整个订阅过程就是<br><img src="/java-async-road-4/subscriber.jpg" alt="Mono的订阅过程"></p>
 <ol>
 <li>subscribe方法中生成subscriber传入MonoFilter中</li>
 <li>在MonoFilter中，把Subscriber包装成FilterSubscriber传入MonoMap中</li>
@@ -514,13 +514,13 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/java-async-road-5/" rel="prev" title="java异步编程探究-Project Reactor实现原理-2">
-                  <i class="fa fa-chevron-left"></i> java异步编程探究-Project Reactor实现原理-2
+                <a href="/java-async-road-5/" rel="prev" title="java 异步编程探究-Project Reactor实现原理-2">
+                  <i class="fa fa-chevron-left"></i> java 异步编程探究-Project Reactor实现原理-2
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/java-async-road-3/" rel="next" title="java异步编程探究-响应式编程">
-                  java异步编程探究-响应式编程 <i class="fa fa-chevron-right"></i>
+                <a href="/java-async-road-3/" rel="next" title="java 异步编程探究-响应式编程">
+                  java 异步编程探究-响应式编程 <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>

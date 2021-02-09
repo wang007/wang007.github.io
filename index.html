@@ -192,20 +192,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-count">14</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-count">19</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -236,6 +236,283 @@
       
 
       
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/spring-cloud-gateway-source/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="wang007">
+      <meta itemprop="description" content="wang007 blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wang007 blog">
+    </span>
+
+    
+    
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/spring-cloud-gateway-source/" class="post-title-link" itemprop="url">spring-cloud-gateway 源码分析</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-02-08 18:05:23" itemprop="dateCreated datePublished" datetime="2021-02-08T18:05:23+08:00">2021-02-08</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-02-09 01:33:37" itemprop="dateModified" datetime="2021-02-09T01:33:37+08:00">2021-02-09</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/spring-webflux/" itemprop="url" rel="index"><span itemprop="name">spring webflux</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/spring-webflux/%E5%BC%82%E6%AD%A5/" itemprop="url" rel="index"><span itemprop="name">异步</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="零"><a href="#零" class="headerlink" title="零"></a>零</h1><p>接着继续分析 spring cloud gateway 的实现原理。<br>spring cloud gateway 基于 spring webflux 封装了薄薄的一层，这篇文章尽量不涉及到 spring webflux 的东西，<br>只把那薄薄的一层封装讲明白就行。<br>后续文章继续把 spring webflux 实现分析一遍，那么这篇文章自然就能衔接上去。</p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><p>之前文章分析过 Route，RouteLocator，RouteLocatorBuilder 等，接着分析写在配置文件中的 Route 信息是如何转成 Route 实例并生效的。</p>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/spring-cloud-gateway-in-action/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="wang007">
+      <meta itemprop="description" content="wang007 blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wang007 blog">
+    </span>
+
+    
+    
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/spring-cloud-gateway-in-action/" class="post-title-link" itemprop="url">spring-cloud-gateway 动态路由实现分析</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-02-07 16:05:15" itemprop="dateCreated datePublished" datetime="2021-02-07T16:05:15+08:00">2021-02-07</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-02-08 20:31:39" itemprop="dateModified" datetime="2021-02-08T20:31:39+08:00">2021-02-08</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/spring-webflux/" itemprop="url" rel="index"><span itemprop="name">spring webflux</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/spring-webflux/%E5%BC%82%E6%AD%A5/" itemprop="url" rel="index"><span itemprop="name">异步</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="零"><a href="#零" class="headerlink" title="零"></a>零</h1><p>上篇文章简单介绍了 spring-cloud-gateway 上手和一些基本原理，接下来这篇文章来讲讲如何在业务中使用 spring-cloud-gateway。  </p>
+<p>在上篇文章讲的示例代码，都是通过 <strong>配置文件 和 代码的方式</strong> 硬编码定义 Route，更新 Route 还得通过重启网关实例。<br>网关作为微服务的统一入口，为后端服务做代理业务。而是后端服务的入口是经常改变的。如果后端服务改动一下路由，网关也要跟着更新，那么对于网关来说就是个灾难。<br>而且时常处于更新阶段也对整个网站的稳定性带来很大的挑战。所以这种硬编码的方式是一定要规避的。<br>接下来讲讲实现动态路由的思路。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/spring-cloud-gateway-in-action/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/spring-cloud-gateway-get-started/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="wang007">
+      <meta itemprop="description" content="wang007 blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wang007 blog">
+    </span>
+
+    
+    
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/spring-cloud-gateway-get-started/" class="post-title-link" itemprop="url">spring-cloud-gateway 上手</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-02-02 20:54:59" itemprop="dateCreated datePublished" datetime="2021-02-02T20:54:59+08:00">2021-02-02</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-02-07 15:49:11" itemprop="dateModified" datetime="2021-02-07T15:49:11+08:00">2021-02-07</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/spring-webflux/" itemprop="url" rel="index"><span itemprop="name">spring webflux</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/spring-webflux/%E5%BC%82%E6%AD%A5/" itemprop="url" rel="index"><span itemprop="name">异步</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="零"><a href="#零" class="headerlink" title="零"></a>零</h1><p>网关在平时微服务中也是比较常用到的一个组件，而作为 spring 系的网关 spring-cloud-gateway 是 java 微服务开发中最常用的网关选项。  </p>
+<ol>
+<li>spring-cloud-gateway 作为切入点，讲讲 spring-cloud-gateway 简单上手，以及如何开发一个生产可用的网关。</li>
+<li>因为 spring-cloud-gateway 基于 spring webflux 开发，而 spring-webflux 基于 netty 和 reactor 开发。<br>所以将出一个系列的文章来逐步分析整个过程的实现原理。</li>
+</ol>
+<p>这里先挖个大坑，这个系列包括的内容</p>
+<ol>
+<li>spring-cloud-gateway 上手，实战，实现原理。</li>
+<li>spring-webflux 上手，实战，实现原理。</li>
+<li>reactor-netty 实现原理（spring webflux 与 netty 的承接层）。</li>
+<li>netty 核心原理组件实现原理。  </li>
+</ol>
+<p>接下来先说说网关简单上手。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/spring-cloud-gateway-get-started/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+  
+  
+  
+
       
   
   
@@ -615,7 +892,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/java-async-road-5/" class="post-title-link" itemprop="url">java异步编程探究-Project Reactor实现原理-2</a>
+            <a href="/java-async-road-5/" class="post-title-link" itemprop="url">java 异步编程探究-Project Reactor实现原理-2</a>
         </h2>
 
         <div class="post-meta-container">
@@ -633,7 +910,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-01-02 01:44:10" itemprop="dateModified" datetime="2021-01-02T01:44:10+08:00">2021-01-02</time>
+        <time title="修改时间：2021-01-28 15:23:09" itemprop="dateModified" datetime="2021-01-28T15:23:09+08:00">2021-01-28</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -714,7 +991,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/java-async-road-4/" class="post-title-link" itemprop="url">java异步编程探究-Project Reactor实现原理</a>
+            <a href="/java-async-road-4/" class="post-title-link" itemprop="url">java 异步编程探究-Project Reactor实现原理</a>
         </h2>
 
         <div class="post-meta-container">
@@ -732,7 +1009,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-01-02 01:44:10" itemprop="dateModified" datetime="2021-01-02T01:44:10+08:00">2021-01-02</time>
+        <time title="修改时间：2021-01-28 15:22:18" itemprop="dateModified" datetime="2021-01-28T15:22:18+08:00">2021-01-28</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -766,7 +1043,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="零"><a href="#零" class="headerlink" title="零"></a>零</h2><p>上一篇文章简单介绍了响应式编程的概念和具体的实现<a target="_blank" rel="noopener" href="https://projectreactor.io/">Project Reactor</a>以及<a href="www.reactive-streams.org">响应式流</a>规范定义的所有接口。<br>这篇文章将深入内部探究Project Reactor实现原理。实际上Project Reactor实现方式和代码风格跟Rxjava非常相似，所以理解了Project Reactor内部的运行原理，那么Rxjava也八九不离十了。而且Rxjava除了Flowable之外都是没背压的，所以实现上总体会简单一点。</p>
+          <h2 id="零"><a href="#零" class="headerlink" title="零"></a>零</h2><p>上一篇文章简单介绍了响应式编程的概念和具体的实现 <a target="_blank" rel="noopener" href="https://projectreactor.io/">Project Reactor</a> 以及 <a href="www.reactive-streams.org">响应式流</a>规范定义的所有接口。<br>这篇文章将深入内部探究 Project Reactor 实现原理。实际上 Project Reactor 实现方式和代码风格跟 Rxjava 非常相似，所以理解了 Project Reactor 内部的运行原理，那么 Rxjava 也八九不离十了。而且 Rxjava 除了 Flowable 之外都是没背压的，所以实现上总体会简单一点。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/java-async-road-4/#more" rel="contents">
@@ -812,7 +1089,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/java-async-road-3/" class="post-title-link" itemprop="url">java异步编程探究-响应式编程</a>
+            <a href="/java-async-road-3/" class="post-title-link" itemprop="url">java 异步编程探究-响应式编程</a>
         </h2>
 
         <div class="post-meta-container">
@@ -830,7 +1107,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-01-02 01:44:10" itemprop="dateModified" datetime="2021-01-02T01:44:10+08:00">2021-01-02</time>
+        <time title="修改时间：2021-01-28 15:17:33" itemprop="dateModified" datetime="2021-01-28T15:17:33+08:00">2021-01-28</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -864,7 +1141,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="零"><a href="#零" class="headerlink" title="零"></a>零</h2><p>该文章是Java异步编程探究系列文章的第三章。</p>
+          <h2 id="零"><a href="#零" class="headerlink" title="零"></a>零</h2><p>该文章是 Java 异步编程探究系列文章的第三章。</p>
 <blockquote>
 <p>响应式编程，也有不少人叫反应式。不管是响应式编程还是反应式编程，反正说的就是它。这里我不纠结于它叫啥。管它白猫还是黑猫，能打老鼠的就是好猫。所以这里都统一叫响应式编程。</p>
 </blockquote>
@@ -872,281 +1149,6 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/java-async-road-3/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/java-async-road-2/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="wang007">
-      <meta itemprop="description" content="wang007 blog">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="wang007 blog">
-    </span>
-
-    
-    
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/java-async-road-2/" class="post-title-link" itemprop="url">java异步编程探究-Future</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2019-11-28 15:07:18" itemprop="dateCreated datePublished" datetime="2019-11-28T15:07:18+08:00">2019-11-28</time>
-    </span>
-      <span class="post-meta-item">
-        <span class="post-meta-item-icon">
-          <i class="far fa-calendar-check"></i>
-        </span>
-        <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-01-02 01:44:10" itemprop="dateModified" datetime="2021-01-02T01:44:10+08:00">2021-01-02</time>
-      </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/java/" itemprop="url" rel="index"><span itemprop="name">java</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/java/%E5%BC%82%E6%AD%A5/" itemprop="url" rel="index"><span itemprop="name">异步</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>该文章是Java异步编程探究系列文章的第二章。<br>如果还没看第一篇文章的话，可以先看下第二篇文章。</p>
-<p>上篇文章提到了，异步往往伴随着callback，而且callback多了之后，很容易形成callback hell导致代码被割据到各个callback中。以至于代码难以阅读和维护。</p>
-<p>这篇文章谈谈解决callback hell的方式之一，Future。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/java-async-road-2/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/java-async-road/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="wang007">
-      <meta itemprop="description" content="wang007 blog">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="wang007 blog">
-    </span>
-
-    
-    
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/java-async-road/" class="post-title-link" itemprop="url">java异步编程探究普拉斯</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2019-11-26 21:40:07" itemprop="dateCreated datePublished" datetime="2019-11-26T21:40:07+08:00">2019-11-26</time>
-    </span>
-      <span class="post-meta-item">
-        <span class="post-meta-item-icon">
-          <i class="far fa-calendar-check"></i>
-        </span>
-        <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-01-02 01:44:10" itemprop="dateModified" datetime="2021-01-02T01:44:10+08:00">2021-01-02</time>
-      </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/java/" itemprop="url" rel="index"><span itemprop="name">java</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/java/%E5%BC%82%E6%AD%A5/" itemprop="url" rel="index"><span itemprop="name">异步</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/java/%E5%BC%82%E6%AD%A5/%E5%8D%8F%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">协程</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>从技术圈的近些年来，异步相关的话题是一个绕不开的话题。前有node.js轻松hold住10万并发，后者golang脚踢Java。<br>实际上呢，Java在高并发方面的性能吊打golang是没有问题的（口说无凭，上<a target="_blank" rel="noopener" href="http://www.techempower.com/benchmarks">性能比拼网站</a>）。奈何Java要写出高并发的应用复杂较大。而golang呢，有了协程的加持可以简单的写成高并发能力的应用。<br>而Java呢，其实也在往方面发力，Java的协程也正在磨刀霍霍向猪羊。<a target="_blank" rel="noopener" href="http://openjdk.java.net/projects/loom/">Project Loom</a> 这是一个非常值得期待的新特性。下面我会详细说说这个Project Loom.</p>
-<p>因为之前分享过一次关于Java异步编程探究，这次直接+ PLUS</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/java-async-road/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/interview-question-1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="wang007">
-      <meta itemprop="description" content="wang007 blog">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="wang007 blog">
-    </span>
-
-    
-    
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/interview-question-1/" class="post-title-link" itemprop="url">面试题-头条</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2019-11-19 23:36:54" itemprop="dateCreated datePublished" datetime="2019-11-19T23:36:54+08:00">2019-11-19</time>
-    </span>
-      <span class="post-meta-item">
-        <span class="post-meta-item-icon">
-          <i class="far fa-calendar-check"></i>
-        </span>
-        <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-01-02 01:44:10" itemprop="dateModified" datetime="2021-01-02T01:44:10+08:00">2021-01-02</time>
-      </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E9%9D%A2%E8%AF%95%E9%A2%98/" itemprop="url" rel="index"><span itemprop="name">面试题</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <blockquote>
-<p>装逼的先说在前头，我个人还不喜欢“预习”或记一些面试题的。相比于这些，我更注重 <strong>平时的积累</strong>。哪怕去面试了，也不会去看面试题。结果也往往很惨。哈哈哈。<br>昨天吧，我常聊的一个技术交流群发了一个面试题的图片，乍看一下，还有点意思。emmmm，然后就解题了。<br>所以以后，有意思的面试题，还是可以拿出来分享和以及说说解题过程。</p>
-</blockquote>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/interview-question-1/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
